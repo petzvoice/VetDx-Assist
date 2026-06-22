@@ -1,72 +1,83 @@
+"use client";
+
+import Card from "../ui/Card";
+import Input from "../ui/Input";
+import Select from "../ui/Select";
+
+import { useCase } from "@/context/CaseContext";
+
 export default function PatientInformation() {
+  const { caseData, setCaseData } = useCase();
+
+  function updatePatient(
+    field: keyof typeof caseData.patient,
+    value: string
+  ) {
+    setCaseData((prev) => ({
+      ...prev,
+      patient: {
+        ...prev.patient,
+        [field]: value,
+      },
+    }));
+  }
+
   return (
-    <div className="rounded-xl bg-white p-6 shadow-md">
-      <h2 className="mb-6 text-2xl font-bold text-slate-800">
-        Patient Information
-      </h2>
-
+    <Card title="🐾 Patient Information">
       <div className="grid gap-6 md:grid-cols-2">
-        <div>
-          <label className="mb-2 block font-medium text-slate-700">
-            Species
-          </label>
 
-          <select className="w-full rounded-lg border p-3">
-            <option>Dog</option>
-            <option>Cat</option>
-            <option>Horse</option>
-            <option>Cattle</option>
-            <option>Other</option>
-          </select>
-        </div>
+        <Select
+          label="Species"
+          options={[
+            "Dog",
+            "Cat",
+            "Horse",
+            "Cattle",
+            "Buffalo",
+            "Goat",
+            "Sheep",
+            "Pig",
+            "Rabbit",
+            "Bird",
+          ]}
+          value={caseData.patient.species}
+          onChange={(value) => updatePatient("species", value)}
+        />
 
-        <div>
-          <label className="mb-2 block font-medium text-slate-700">
-            Breed
-          </label>
+        <Input
+          label="Breed"
+          placeholder="e.g. Labrador Retriever"
+          value={caseData.patient.breed}
+          onChange={(value) => updatePatient("breed", value)}
+        />
 
-          <input
-            type="text"
-            placeholder="Enter breed"
-            className="w-full rounded-lg border p-3"
-          />
-        </div>
+        <Input
+          label="Age"
+          placeholder="e.g. 5 years"
+          value={caseData.patient.age}
+          onChange={(value) => updatePatient("age", value)}
+        />
 
-        <div>
-          <label className="mb-2 block font-medium text-slate-700">
-            Age
-          </label>
+        <Select
+          label="Sex"
+          options={[
+            "Male",
+            "Female",
+            "Male (Neutered)",
+            "Female (Spayed)",
+          ]}
+          value={caseData.patient.sex}
+          onChange={(value) => updatePatient("sex", value)}
+        />
 
-          <input
-            type="text"
-            placeholder="e.g. 5 years"
-            className="w-full rounded-lg border p-3"
-          />
-        </div>
+        <Input
+          label="Weight"
+          placeholder="e.g. 22 kg"
+          value={caseData.patient.weight}
+          onChange={(value) => updatePatient("weight", value)}
+        />
 
-        <div>
-          <label className="mb-2 block font-medium text-slate-700">
-            Sex
-          </label>
-
-          <select className="w-full rounded-lg border p-3">
-            <option>Male</option>
-            <option>Female</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="mb-2 block font-medium text-slate-700">
-            Weight (kg)
-          </label>
-
-          <input
-            type="number"
-            placeholder="Weight"
-            className="w-full rounded-lg border p-3"
-          />
-        </div>
       </div>
-    </div>
+    </Card>
   );
 }
