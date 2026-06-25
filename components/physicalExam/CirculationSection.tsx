@@ -33,9 +33,9 @@ export default function CirculationSection() {
       <SingleSelectGroup
         label="Mucous Membranes"
         options={MUCOUS_MEMBRANE_OPTIONS}
-        value={caseData.physicalExam.mucousMembrane}
+        value={caseData.physicalExam.mucousMembranes}
         onChange={(value) =>
-          updatePhysicalExam("mucousMembrane", value)
+         updatePhysicalExam("mucousMembranes", value)
         }
       />
 

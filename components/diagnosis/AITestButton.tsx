@@ -1,6 +1,7 @@
 "use client";
 
 import { useCase } from "@/context/CaseContext";
+import { supabaseClient } from "@/lib/supabaseClient";
 import type { AIClinicalReport } from "@/types/ai";
 
 type Props = {
@@ -22,27 +23,62 @@ export default function AITestButton({
     try {
       setLoading(true);
 
+      const sessionResult =
+        await supabaseClient.auth.getSession();
+
+      console.log(
+        "SESSION:",
+        sessionResult.data.session
+      );
+
+      const {
+        data: { user },
+      } = await supabaseClient.auth.getUser();
+
+      console.log("USER:", user);
+
+      if (!user) {
+        onError(
+          "Please login to generate a clinical report."
+        );
+        return;
+      }
+
       const response = await fetch("/api/diagnose", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(caseData),
+        body: JSON.stringify({
+          ...caseData,
+          userId: user.id,
+        }),
       });
 
       const data = await response.json();
 
+      console.log(
+        "API RESPONSE:",
+        data
+      );
+
       if (!response.ok || !data.success) {
-        onError(data.message || "Unable to generate AI report.");
+        onError(
+          data.message ||
+            "Unable to generate AI report."
+        );
         return;
       }
 
       onResult(data.data);
     } catch (error) {
-      console.error(error);
+      console.error(
+        "AI ERROR:",
+        error
+      );
 
       onError(
-        "Something went wrong while generating the AI report. Please check your internet connection and try again."
+        "Something went wrong while generating the AI report."
       );
     } finally {
       setLoading(false);
@@ -55,7 +91,9 @@ export default function AITestButton({
       disabled={loading}
       className="rounded-xl bg-cyan-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
     >
-      {loading ? "Generating AI Report..." : "Generate AI Diagnosis"}
+      {loading
+        ? "Generating AI Report..."
+        : "Generate AI Diagnosis"}
     </button>
   );
 }

@@ -2,8 +2,16 @@
 
 import Card from "../ui/Card";
 
+type MonitoringItem =
+  | string
+  | {
+      parameter?: string;
+      frequency?: string;
+      details?: string;
+    };
+
 type MonitoringCardProps = {
-  monitoring: string[];
+  monitoring: MonitoringItem[];
 };
 
 export default function MonitoringCard({
@@ -19,22 +27,47 @@ export default function MonitoringCard({
         </div>
       ) : (
         <div className="space-y-4">
-          {monitoring.map((item, index) => (
-            <div
-              key={index}
-              className="flex gap-4 rounded-xl border border-slate-700 bg-slate-900/50 p-4"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-600 font-bold text-white">
-                {index + 1}
-              </div>
+          {monitoring.map((item, index) => {
+            const parameter =
+              typeof item === "string"
+                ? item
+                : item.parameter ?? "Monitoring Item";
 
-              <div>
-                <p className="font-medium text-white">
-                  {item}
-                </p>
+            const frequency =
+              typeof item === "string"
+                ? ""
+                : item.frequency ?? "";
+
+            const details =
+              typeof item === "string"
+                ? ""
+                : item.details ?? "";
+
+            return (
+              <div
+                key={index}
+                className="rounded-xl border border-slate-700 bg-slate-900/50 p-4"
+              >
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-white">
+                    {parameter}
+                  </h3>
+
+                  {frequency && (
+                    <span className="rounded-full bg-cyan-700 px-3 py-1 text-xs font-semibold text-white">
+                      {frequency}
+                    </span>
+                  )}
+                </div>
+
+                {details && (
+                  <p className="mt-3 text-sm text-slate-400">
+                    {details}
+                  </p>
+                )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Card>

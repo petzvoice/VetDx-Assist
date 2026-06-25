@@ -26,59 +26,111 @@ export default function AIClinicalReport({
 
       <ReportHeader
         patientName=""
-        species={report.patientSummary.species}
+        species={report.patientSummary?.species ?? ""}
       />
 
       <PatientSummaryCard
-        species={report.patientSummary.species}
-        breed={report.patientSummary.breed}
-        age={report.patientSummary.age}
-        sex={report.patientSummary.sex}
-        weight={report.patientSummary.weight}
-        summary={report.patientSummary.summary}
+        species={report.patientSummary?.species ?? ""}
+        breed={report.patientSummary?.breed ?? ""}
+        age={report.patientSummary?.age ?? ""}
+        sex={report.patientSummary?.sex ?? ""}
+        weight={report.patientSummary?.weight ?? ""}
+        summary={report.patientSummary?.summary ?? ""}
       />
 
       <ProblemListCard
-        problems={report.problemList}
+        problems={
+          Array.isArray(report.problemList)
+            ? report.problemList
+            : []
+        }
       />
 
-      {report.differentials.map((disease, index) => (
-        <DifferentialDiagnosisCard
-          key={index}
-          rank={index + 1}
-          name={disease.name}
-          confidence={disease.confidence}
-          reasons={disease.reasons}
-          tests={disease.tests}
-        />
-      ))}
+      {Array.isArray(report.differentials) &&
+        report.differentials.map(
+          (disease, index) => (
+            <DifferentialDiagnosisCard
+              key={index}
+              rank={index + 1}
+              name={disease?.name ?? "Unknown"}
+              confidence={
+                disease?.confidence ?? 50
+              }
+              reasons={
+                Array.isArray(
+                  disease?.reasoning
+                )
+                  ? disease.reasoning
+                  : []
+              }
+              tests={
+                Array.isArray(
+                  disease?.recommendedTests
+                )
+                  ? disease.recommendedTests
+                  : []
+              }
+            />
+          )
+        )}
 
       <RecommendedDiagnosticsCard
-        diagnostics={report.recommendedDiagnostics}
+        diagnostics={
+          Array.isArray(
+            report.recommendedDiagnostics
+          )
+            ? report.recommendedDiagnostics
+            : []
+        }
       />
 
       <EmergencyFlagsCard
-        flags={report.emergencyFlags}
+        flags={
+          Array.isArray(report.redFlags)
+            ? report.redFlags
+            : []
+        }
       />
 
       <StabilizationCard
-        stabilization={report.stabilization}
+        stabilization={
+          Array.isArray(report.stabilization)
+            ? report.stabilization
+            : []
+        }
       />
 
       <TreatmentConsiderationsCard
-        considerations={report.treatmentConsiderations}
+        considerations={
+          Array.isArray(
+            report.treatmentConsiderations
+          )
+            ? report.treatmentConsiderations
+            : []
+        }
       />
 
       <MonitoringCard
-        monitoring={report.monitoring}
+        monitoring={
+          Array.isArray(report.monitoring)
+            ? report.monitoring
+            : []
+        }
       />
 
       <PrognosisCard
-        prognosis={report.prognosis}
+        prognosis={
+          report.prognosis ?? {
+            shortTerm: "",
+            longTerm: "",
+          }
+        }
       />
 
       <ClientSummaryCard
-        summary={report.clientSummary}
+        summary={
+          report.clientSummary ?? ""
+        }
       />
 
     </div>

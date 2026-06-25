@@ -2,8 +2,15 @@
 
 import Card from "../ui/Card";
 
+type TreatmentItem =
+  | string
+  | {
+      recommendation?: string;
+      details?: string;
+    };
+
 type TreatmentConsiderationsCardProps = {
-  considerations: string[];
+  considerations: TreatmentItem[];
 };
 
 export default function TreatmentConsiderationsCard({
@@ -19,22 +26,40 @@ export default function TreatmentConsiderationsCard({
         </div>
       ) : (
         <div className="space-y-4">
-          {considerations.map((item, index) => (
-            <div
-              key={index}
-              className="flex gap-4 rounded-xl border border-slate-700 bg-slate-900/50 p-4"
-            >
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-600 font-bold text-white">
-                {index + 1}
-              </div>
+          {considerations.map((item, index) => {
+            const recommendation =
+              typeof item === "string"
+                ? item
+                : item.recommendation ?? "Recommendation";
 
-              <div>
-                <p className="font-medium text-white">
-                  {item}
-                </p>
+            const details =
+              typeof item === "string"
+                ? ""
+                : item.details ?? "";
+
+            return (
+              <div
+                key={index}
+                className="flex gap-4 rounded-xl border border-slate-700 bg-slate-900/50 p-4"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-green-600 font-bold text-white">
+                  {index + 1}
+                </div>
+
+                <div>
+                  <p className="font-medium text-white">
+                    {recommendation}
+                  </p>
+
+                  {details && (
+                    <p className="mt-2 text-sm text-slate-400">
+                      {details}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </Card>

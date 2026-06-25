@@ -46,13 +46,21 @@ export interface ClinicalSignsData {
 export interface PhysicalExamData {
   temperature: string;
   pulse: string;
+  heartRate: string;
   respiration: string;
+  respiratoryRate: string;
   mucousMembranes: string;
+  pulseQuality: string;
   crt: string;
   hydration: string;
+  lymphNodes: string;
   bodyConditionScore: string;
   painScore: string;
   findings: string;
+  notes: string;
+  abdominalFindings: string[];
+  heartFindings: string[];
+  lungFindings: string[];
 }
 
 export interface DiagnosticsData {
@@ -98,9 +106,9 @@ type CaseContextType = {
   ) => void;
 
   updatePhysicalExam: (
-    field: keyof PhysicalExamData,
-    value: string
-  ) => void;
+   field: keyof PhysicalExamData,
+   value: string | string[]
+ ) => void;
 
   updateDiagnostics: (
     field: keyof DiagnosticsData,
@@ -147,17 +155,25 @@ const defaultCaseData: CaseData = {
     reproductive: [],
   },
 
-  physicalExam: {
-    temperature: "",
-    pulse: "",
-    respiration: "",
-    mucousMembranes: "",
-    crt: "",
-    hydration: "",
-    bodyConditionScore: "",
-    painScore: "",
-    findings: "",
-  },
+ physicalExam: {
+  temperature: "",
+  pulse: "",
+  heartRate: "",
+  respiration: "",
+  respiratoryRate: "",
+  mucousMembranes: "",
+  pulseQuality: "",
+  crt: "",
+  hydration: "",
+  lymphNodes: "",
+  bodyConditionScore: "",
+  painScore: "",
+  findings: "",
+  notes: "",
+  abdominalFindings: [],
+  heartFindings: [],
+  lungFindings: [],
+},
 
   diagnostics: {
     cbc: "",
@@ -223,10 +239,10 @@ export function CaseProvider({
     }));
   }
 
-  function updatePhysicalExam(
-    field: keyof PhysicalExamData,
-    value: string
-  ) {
+ function updatePhysicalExam(
+  field: keyof PhysicalExamData,
+  value: string | string[]
+){
     setCaseData((prev) => ({
       ...prev,
       physicalExam: {

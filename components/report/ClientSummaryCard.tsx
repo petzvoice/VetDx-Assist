@@ -2,18 +2,30 @@
 
 import Card from "../ui/Card";
 
+type ClientSummaryType =
+  | string
+  | {
+      summary?: string;
+    };
+
 type ClientSummaryCardProps = {
-  summary: string;
+  summary: ClientSummaryType;
 };
 
 export default function ClientSummaryCard({
   summary,
 }: ClientSummaryCardProps) {
+  const clientSummary =
+    typeof summary === "string"
+      ? summary
+      : summary?.summary ?? "";
+
   return (
     <Card title="👨‍⚕️ Client Communication Summary">
       <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-6">
         <p className="leading-8 text-slate-200">
-          {summary || "No client summary generated."}
+          {clientSummary ||
+            "No client summary generated."}
         </p>
       </div>
     </Card>

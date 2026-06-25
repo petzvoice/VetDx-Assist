@@ -25,14 +25,59 @@ export interface DifferentialDiagnosis {
 
   againstFindings: string[];
 
-  recommendedTests: string[];
+  recommendedTests:
+    | string[]
+    | {
+        test: string;
+        justification?: string;
+      }[];
 
-  initialTreatment: string[];
+  initialTreatment:
+    | string[]
+    | {
+        recommendation: string;
+        details?: string;
+      }[];
+}
+
+export interface DiagnosticRecommendation {
+  test: string;
+  justification?: string;
+}
+
+export interface StabilizationRecommendation {
+  recommendation: string;
+  details?: string;
+}
+
+export interface TreatmentRecommendation {
+  recommendation: string;
+  details?: string;
+}
+
+export interface MonitoringRecommendation {
+  parameter: string;
+  frequency?: string;
+  details?: string;
+}
+
+export interface EmergencyFlag {
+  flag: string;
+  severity?: string;
+  details?: string;
 }
 
 export interface Prognosis {
-  shortTerm: string;
-  longTerm: string;
+  shortTerm?: string;
+  longTerm?: string;
+
+  initialPrognosis?: string;
+
+  supportingFindings?: string[];
+
+  factorsImprovingPrognosis?: string[];
+
+  factorsWorseningPrognosis?: string[];
 }
 
 export interface AIClinicalReport {
@@ -40,23 +85,43 @@ export interface AIClinicalReport {
 
   triage: TriageAssessment;
 
-  problemList: string[];
+  problemList:
+    | string[]
+    | {
+        problem?: string;
+        priority?: string;
+        description?: string;
+      }[];
 
   differentials: DifferentialDiagnosis[];
 
-  recommendedDiagnostics: string[];
+  recommendedDiagnostics:
+    | string[]
+    | DiagnosticRecommendation[];
 
-  stabilization: string[];
+  stabilization:
+    | string[]
+    | StabilizationRecommendation[];
 
-  treatmentConsiderations: string[];
+  treatmentConsiderations:
+    | string[]
+    | TreatmentRecommendation[];
 
-  monitoring: string[];
+  monitoring:
+    | string[]
+    | MonitoringRecommendation[];
 
-  redFlags: string[];
+  redFlags:
+    | string[]
+    | EmergencyFlag[];
 
   clinicalPearls: string[];
 
-  prognosis: Prognosis;
+  prognosis: Prognosis | string;
 
-  clientSummary: string;
+  clientSummary:
+    | string
+    | {
+        summary?: string;
+      };
 }

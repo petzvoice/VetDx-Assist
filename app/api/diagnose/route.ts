@@ -1,6 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
 import type { AIClinicalReport } from "@/types/ai";
 
 const ai = new GoogleGenAI({
@@ -8,168 +7,60 @@ const ai = new GoogleGenAI({
 });
 
 const MODEL = "gemini-2.5-flash";
-
-/* =====================================================
-   Build Prompt
-===================================================== */
-
 function buildPrompt(caseData: any) {
   return `
 You are VetDx Assist.
 
 You are a board-certified veterinary internal medicine specialist.
 
-Your job is NOT to guess.
+Analyze the veterinary patient using clinical reasoning.
 
-Your job is to reason exactly like an experienced clinician.
+Do not guess when information is insufficient.
 
-Analyze the following veterinary patient.
+Return ONLY valid JSON.
 
-Return ONLY VALID JSON.
+IMPORTANT:
 
-Do NOT use markdown.
-
-Do NOT use code blocks.
-
-Do NOT explain anything outside JSON.
-
-----------------------------------------------------
+Return ONLY raw JSON.
+Do not use markdown.
+Do not wrap JSON inside \`\`\`json blocks.
+Do not add explanations before or after JSON.
 
 Rules:
 
-• Think step-by-step.
+- Generate a prioritized problem list.
+- Rank differential diagnoses by likelihood.
+- Use realistic confidence estimates.
+- Confidence values should not total 100%.
+- Choose one triage status:
+  Stable, Urgent, or Emergency.
+- Include supporting findings.
+- Include findings against each diagnosis.
+- Include recommended diagnostics.
+- Include conservative stabilization and treatment recommendations.
 
-• Generate a prioritized problem list.
-
-• Rank differential diagnoses by probability.
-
-• Confidence must be realistic.
-
-Top diagnosis:
-
-70-95%
-
-Second:
-
-50-85%
-
-Third:
-
-35-70%
-
-Never return
-
-1%
-
-2%
-
-3%
-
-5%
-
-unless information is extremely insufficient.
-
-Never make confidence totals equal 100%.
-
-Confidence represents independent likelihood.
-
-----------------------------------------------------
-
-Emergency Triage
-
-Choose ONLY ONE
-
-Stable
-
-Urgent
-
-Emergency
-
-----------------------------------------------------
-
-Clinical reasoning must include
-
-Why diagnosis fits
-
-Supporting findings
-
-Findings against diagnosis
-
-Recommended diagnostics
-
-Initial stabilization
-
-----------------------------------------------------
-
-Treatment recommendations must be conservative.
-
-Never prescribe dangerous medications.
-
-----------------------------------------------------
-
-Return EXACTLY this schema.
+Return JSON with these fields:
 
 {
-  "patientSummary": {
-    "species":"",
-    "breed":"",
-    "age":"",
-    "sex":"",
-    "weight":"",
-    "summary":""
-  },
-
-  "triage":{
-      "status":"",
-      "reason":""
-  },
-
-  "problemList":[],
-
-  "differentials":[
-      {
-          "name":"",
-          "category":"",
-          "confidence":0,
-          "reasoning":[],
-          "supportingFindings":[],
-          "againstFindings":[],
-          "recommendedTests":[],
-          "initialTreatment":[]
-      }
-  ],
-
-  "recommendedDiagnostics":[],
-
-  "stabilization":[],
-
-  "treatmentConsiderations":[],
-
-  "monitoring":[],
-
-  "redFlags":[],
-
-  "clinicalPearls":[],
-
-  "prognosis":{
-      "shortTerm":"",
-      "longTerm":""
-  },
-
-  "clientSummary":""
+  "patientSummary": {},
+  "triage": {},
+  "problemList": [],
+  "differentials": [],
+  "recommendedDiagnostics": [],
+  "stabilization": [],
+  "treatmentConsiderations": [],
+  "monitoring": [],
+  "redFlags": [],
+  "clinicalPearls": [],
+  "prognosis": {},
+  "clientSummary": ""
 }
 
-----------------------------------------------------
+Clinical Case:
 
-Clinical Case
-
-${JSON.stringify(caseData, null, 2)}
+${JSON.stringify(caseData)}
 `;
 }
-
-/* =====================================================
-   Remove Markdown
-===================================================== */
 
 function cleanResponse(text: string) {
   return text
@@ -178,20 +69,33 @@ function cleanResponse(text: string) {
     .trim();
 }
 
-/* =====================================================
-   Confidence Fix
-===================================================== */
+function validateReport(
+  report: any
+): report is AIClinicalReport {
+  return (
+    report &&
+    typeof report === "object" &&
+    report.patientSummary &&
+    report.triage &&
+    Array.isArray(report.problemList) &&
+    Array.isArray(report.differentials)
+  );
+}
 
 function normalizeConfidence(
   report: AIClinicalReport
 ) {
-  if (!report.differentials?.length) return report;
+  if (!report.differentials?.length) {
+    return report;
+  }
 
   report.differentials =
     report.differentials.map((d, index) => {
       let confidence = Number(d.confidence);
 
-      if (isNaN(confidence)) confidence = 60;
+      if (isNaN(confidence)) {
+        confidence = 60;
+      }
 
       if (confidence < 30) {
         confidence = Math.max(
@@ -200,8 +104,9 @@ function normalizeConfidence(
         );
       }
 
-      if (confidence > 98)
+      if (confidence > 98) {
         confidence = 98;
+      }
 
       return {
         ...d,
@@ -212,59 +117,70 @@ function normalizeConfidence(
   return report;
 }
 
-/* =====================================================
-   Validation
-===================================================== */
-
-function validateReport(
-  report: any
-): report is AIClinicalReport {
-  return (
-    report &&
-    report.patientSummary &&
-    report.triage &&
-    Array.isArray(report.problemList) &&
-    Array.isArray(report.differentials)
-  );
-}
-/* =====================================================
-   POST
-===================================================== */
-
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
     const prompt = buildPrompt(body);
 
-    let report: AIClinicalReport | null = null;
+    let report: AIClinicalReport | null =
+      null;
 
     let lastError = "";
 
-    /* ==========================================
-       Retry up to 3 times
-    ========================================== */
-
-    for (let attempt = 1; attempt <= 3; attempt++) {
+    for (
+      let attempt = 1;
+      attempt <= 3;
+      attempt++
+    ) {
       try {
-        const response = await ai.models.generateContent({
-          model: MODEL,
-          contents: prompt,
-        });
+        const response =
+          await ai.models.generateContent({
+            model: MODEL,
+            contents: prompt,
+          });
 
-        let text = cleanResponse(response.text ?? "");
+        const text = cleanResponse(
+          response.text ?? ""
+        );
 
         if (!text) {
-          throw new Error("Gemini returned an empty response.");
+          throw new Error(
+            "Gemini returned an empty response."
+          );
         }
 
-        const parsed = JSON.parse(text);
+        const firstBrace =
+          text.indexOf("{");
+
+        const lastBrace =
+          text.lastIndexOf("}");
+
+        if (
+          firstBrace === -1 ||
+          lastBrace === -1
+        ) {
+          throw new Error(
+            "No JSON object found."
+          );
+        }
+
+        const jsonText = text.slice(
+          firstBrace,
+          lastBrace + 1
+        );
+
+        const parsed =
+          JSON.parse(jsonText);
 
         if (!validateReport(parsed)) {
-          throw new Error("Invalid JSON schema.");
+          throw new Error(
+            "Invalid JSON schema."
+          );
         }
 
-        report = normalizeConfidence(parsed);
+        report =
+          normalizeConfidence(parsed);
 
         break;
       } catch (err: any) {
@@ -274,6 +190,12 @@ export async function POST(req: Request) {
           `Gemini attempt ${attempt} failed:`,
           err
         );
+
+        if (attempt < 3) {
+          await new Promise((resolve) =>
+            setTimeout(resolve, 2000)
+          );
+        }
       }
     }
 
@@ -291,115 +213,188 @@ export async function POST(req: Request) {
       );
     }
 
-    /* ==========================================
-       Additional Safety Checks
-    ========================================== */
+    report.problemList = Array.isArray(
+      report.problemList
+    )
+      ? report.problemList.map((p: any) =>
+          typeof p === "string"
+            ? p
+            : p.problem ||
+              p.description ||
+              "Unknown Problem"
+        )
+      : [];
 
-    report.problemList ??= [];
+    report.recommendedDiagnostics =
+      Array.isArray(
+        report.recommendedDiagnostics
+      )
+        ? report.recommendedDiagnostics
+        : [];
 
-    report.differentials ??= [];
+    report.stabilization =
+      Array.isArray(
+        report.stabilization
+      )
+        ? report.stabilization
+        : [];
 
-    report.recommendedDiagnostics ??= [];
+    report.treatmentConsiderations =
+      Array.isArray(
+        report.treatmentConsiderations
+      )
+        ? report.treatmentConsiderations
+        : [];
 
-    report.stabilization ??= [];
+    report.monitoring = Array.isArray(
+      report.monitoring
+    )
+      ? report.monitoring
+      : [];
 
-    report.treatmentConsiderations ??= [];
+    report.redFlags = Array.isArray(
+      report.redFlags
+    )
+      ? report.redFlags
+      : [];
 
-    report.monitoring ??= [];
-
-    report.redFlags ??= [];
-
-    report.clinicalPearls ??= [];
+    report.clinicalPearls =
+      Array.isArray(
+        report.clinicalPearls
+      )
+        ? report.clinicalPearls
+        : [];
 
     report.clientSummary ??= "";
 
-    report.prognosis ??= {
-      shortTerm: "",
-      longTerm: "",
+    report.patientSummary = {
+      species:
+        report.patientSummary?.species ??
+        "",
+      breed:
+        report.patientSummary?.breed ??
+        "",
+      age:
+        report.patientSummary?.age ?? "",
+      sex:
+        report.patientSummary?.sex ?? "",
+      weight:
+        report.patientSummary?.weight ??
+        "",
+      summary:
+        report.patientSummary?.summary ??
+        "",
     };
 
-    report.patientSummary ??= {
-      species: "",
-      breed: "",
-      age: "",
-      sex: "",
-      weight: "",
-      summary: "",
+    report.triage = {
+      status:
+        report.triage?.status ??
+        "Stable",
+      reason:
+        report.triage?.reason ?? "",
     };
 
-    report.triage ??= {
-      status: "Stable",
-      reason: "",
-    };
+   const prognosisData =
+  typeof report.prognosis === "object" &&
+  report.prognosis !== null
+    ? report.prognosis
+    : {};
 
-    /* ==========================================
-       Normalize Differential List
-    ========================================== */
+report.prognosis = {
+  shortTerm:
+    (prognosisData as any).shortTerm ?? "",
+  longTerm:
+    (prognosisData as any).longTerm ?? "",
+};
 
-    report.differentials =
-      report.differentials.map((d) => ({
-        name: d.name ?? "Unknown Diagnosis",
+   report.differentials = Array.isArray(
+  report.differentials
+)
+  ? report.differentials.flatMap((item: any) => {
 
-        category: d.category ?? "General",
+      // Structure A
+      if (Array.isArray(item.diagnoses)) {
+        return item.diagnoses.map(
+          (diag: any) => ({
+            name:
+              diag.diagnosis ??
+              "Unknown Diagnosis",
 
-        confidence:
-          Number(d.confidence) || 50,
+            category:
+              item.problem ??
+              "General",
 
-        reasoning:
-          d.reasoning ?? [],
+            confidence:
+              Number(diag.confidence) ||
+              50,
 
-        supportingFindings:
-          d.supportingFindings ?? [],
+            reasoning: [],
 
-        againstFindings:
-          d.againstFindings ?? [],
+            supportingFindings:
+              Array.isArray(
+                diag.supportingFindings
+              )
+                ? diag.supportingFindings
+                : [],
 
-        recommendedTests:
-          d.recommendedTests ?? [],
+            againstFindings:
+              Array.isArray(
+                diag.findingsAgainst
+              )
+                ? diag.findingsAgainst
+                : [],
 
-        initialTreatment:
-          d.initialTreatment ?? [],
-      }));
-          /* ==========================================
-       Save Case to Supabase
-    ========================================== */
+            recommendedTests: [],
 
-    const { error: supabaseError } = await supabase
-      .from("cases")
-      .insert([
-        {
-          patient: body.patient,
-          history: body.history,
-          clinical_signs: body.clinicalSigns,
-          physical_exam: body.physicalExam,
-          diagnostics: body.diagnostics,
-          ai_response: report,
-        },
-      ]);
+            initialTreatment: [],
+          })
+        );
+      }
 
-    if (supabaseError) {
-      console.error(
-        "========== SUPABASE ERROR =========="
-      );
-      console.error(supabaseError);
-      console.error(
-        "===================================="
-      );
-    } else {
-      console.log(
-        "========== CASE SAVED =========="
-      );
-    }
+      // Structure B
+      if (item.diagnosis) {
+        return [
+          {
+            name: item.diagnosis,
 
-    /* ==========================================
-       Return Report
-    ========================================== */
+            category: "General",
+
+            confidence:
+              Number(item.confidence) ||
+              50,
+
+            reasoning: [],
+
+            supportingFindings:
+              Array.isArray(
+                item.supportingFindings
+              )
+                ? item.supportingFindings
+                : [],
+
+            againstFindings:
+              Array.isArray(
+                item.findingsAgainst
+              )
+                ? item.findingsAgainst
+                : [],
+
+            recommendedTests: [],
+
+            initialTreatment: [],
+          },
+        ];
+      }
+
+      return [];
+    })
+  : [];
+
 
     return NextResponse.json({
       success: true,
       data: report,
     });
-
   } catch (error: any) {
     console.error(
       "========== API ERROR =========="
