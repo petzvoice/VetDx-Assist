@@ -3,17 +3,20 @@
 import { useState } from "react";
 
 import Card from "../ui/Card";
-import ErrorAlert from "../ui/ErrorAlert";
-import ReportSkeleton from "../report/ReportSkeleton";
-import AIClinicalReport from "../report/AIClinicalReport";
+import ClinicalReportViewer from "../report/ClinicalReportViewer";
 import AITestButton from "./AITestButton";
 
 import type { AIClinicalReport as AIClinicalReportType } from "@/types/ai";
 
 export default function DifferentialDiagnosis() {
-  const [report, setReport] = useState<AIClinicalReportType | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [report, setReport] =
+    useState<AIClinicalReportType | null>(null);
+
+  const [loading, setLoading] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
 
   return (
     <Card title="🤖 AI Clinical Report">
@@ -31,32 +34,12 @@ export default function DifferentialDiagnosis() {
           />
         </div>
 
-        {error && (
-          <ErrorAlert
-            message={error}
-            onRetry={() => setError("")}
-          />
-        )}
-
-        {loading ? (
-          <ReportSkeleton />
-        ) : report ? (
-          <AIClinicalReport report={report} />
-        ) : (
-          <div className="rounded-xl border border-dashed border-slate-700 py-16 text-center">
-            <h3 className="text-xl font-semibold text-white">
-              No AI Report Generated
-            </h3>
-
-            <p className="mt-3 text-slate-400">
-              Complete the patient information and click{" "}
-              <span className="font-semibold text-cyan-400">
-                Generate AI Diagnosis
-              </span>{" "}
-              to receive a comprehensive AI clinical report.
-            </p>
-          </div>
-        )}
+        <ClinicalReportViewer
+          loading={loading}
+          error={error}
+          report={report}
+          onClearError={() => setError("")}
+        />
 
       </div>
     </Card>

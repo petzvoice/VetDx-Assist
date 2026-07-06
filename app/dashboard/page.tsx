@@ -23,7 +23,7 @@ export default function DashboardPage() {
         <p className="mt-2 text-slate-400">
           Welcome to your dashboard.
         </p>
-
+       
         <div className="mt-10 grid gap-6 md:grid-cols-3">
 
           <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
@@ -38,9 +38,10 @@ export default function DashboardPage() {
             <div className="mt-6">
                            <Button
   fullWidth
-  onClick={() => router.push("/diagnosis")}
->Start Case
-            </Button>
+  onClick={() => router.push("/new-case")}
+>
+  Start New Case
+</Button>
   
             </div>
           </div>

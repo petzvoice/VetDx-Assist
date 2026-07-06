@@ -1,7 +1,7 @@
 "use client";
 
 import { useCase } from "@/context/CaseContext";
-import { supabaseClient } from "@/lib/supabaseClient";
+import { generateDiagnosis } from "@/lib/generateDiagnosis";
 import type { AIClinicalReport } from "@/types/ai";
 
 type Props = {
@@ -19,66 +19,21 @@ export default function AITestButton({
 }: Props) {
   const { caseData } = useCase();
 
-  async function generateDiagnosis() {
+  async function handleGenerateDiagnosis() {
     try {
       setLoading(true);
 
-      const sessionResult =
-        await supabaseClient.auth.getSession();
+      const report = await generateDiagnosis(caseData);
 
-      console.log(
-        "SESSION:",
-        sessionResult.data.session
-      );
+      console.log("AI REPORT:", report);
 
-      const {
-        data: { user },
-      } = await supabaseClient.auth.getUser();
-
-      console.log("USER:", user);
-
-      if (!user) {
-        onError(
-          "Please login to generate a clinical report."
-        );
-        return;
-      }
-
-      const response = await fetch("/api/diagnose", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...caseData,
-          userId: user.id,
-        }),
-      });
-
-      const data = await response.json();
-
-      console.log(
-        "API RESPONSE:",
-        data
-      );
-
-      if (!response.ok || !data.success) {
-        onError(
-          data.message ||
-            "Unable to generate AI report."
-        );
-        return;
-      }
-
-      onResult(data.data);
-    } catch (error) {
-      console.error(
-        "AI ERROR:",
-        error
-      );
+      onResult(report);
+    } catch (error: any) {
+      console.error("AI ERROR:", error);
 
       onError(
-        "Something went wrong while generating the AI report."
+        error?.message ||
+          "Something went wrong while generating the AI report."
       );
     } finally {
       setLoading(false);
@@ -87,7 +42,7 @@ export default function AITestButton({
 
   return (
     <button
-      onClick={generateDiagnosis}
+      onClick={handleGenerateDiagnosis}
       disabled={loading}
       className="rounded-xl bg-cyan-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:bg-cyan-700 disabled:cursor-not-allowed disabled:opacity-50"
     >

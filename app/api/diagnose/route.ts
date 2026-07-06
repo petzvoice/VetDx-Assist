@@ -38,6 +38,11 @@ Rules:
 - Include findings against each diagnosis.
 - Include recommended diagnostics.
 - Include conservative stabilization and treatment recommendations.
+- Prognosis MUST ALWAYS include:
+  - shortTerm
+  - longTerm
+  Both must be non-empty strings.
+  Never use short_term or long_term keys.
 
 Return JSON with these fields:
 
@@ -82,37 +87,34 @@ function validateReport(
   );
 }
 
-function normalizeConfidence(
-  report: AIClinicalReport
-) {
-  if (!report.differentials?.length) {
-    return report;
-  }
+function normalizeConfidence(report: AIClinicalReport) {
+  if (!report.differentials?.length) return report;
 
-  report.differentials =
-    report.differentials.map((d, index) => {
-      let confidence = Number(d.confidence);
+  // sort by AI confidence first
+  const sorted = [...report.differentials].sort((a, b) => {
+    return (Number(b.confidence) || 0) - (Number(a.confidence) || 0);
+  });
 
-      if (isNaN(confidence)) {
-        confidence = 60;
-      }
+  const base = 92;
+  const step = 14;
 
-      if (confidence < 30) {
-        confidence = Math.max(
-          40,
-          92 - index * 12
-        );
-      }
+  report.differentials = sorted.map((d, index) => {
+    let confidence = Number(d.confidence);
 
-      if (confidence > 98) {
-        confidence = 98;
-      }
+    if (!isFinite(confidence)) {
+      confidence = base - index * step;
+    }
 
-      return {
-        ...d,
-        confidence,
-      };
-    });
+    // FORCE separation even if AI gives similar values
+    confidence = base - index * step;
+
+    confidence = Math.max(5, Math.min(95, confidence));
+
+    return {
+      ...d,
+      confidence,
+    };
+  });
 
   return report;
 }
@@ -294,17 +296,25 @@ export async function POST(req: Request) {
         report.triage?.reason ?? "",
     };
 
-   const prognosisData =
+const prognosisData =
   typeof report.prognosis === "object" &&
   report.prognosis !== null
     ? report.prognosis
     : {};
 
+const shortTerm =
+  (prognosisData as any).shortTerm ??
+  (prognosisData as any).short_term ??
+  "";
+
+const longTerm =
+  (prognosisData as any).longTerm ??
+  (prognosisData as any).long_term ??
+  "";
+
 report.prognosis = {
-  shortTerm:
-    (prognosisData as any).shortTerm ?? "",
-  longTerm:
-    (prognosisData as any).longTerm ?? "",
+  shortTerm,
+  longTerm,
 };
 
    report.differentials = Array.isArray(
