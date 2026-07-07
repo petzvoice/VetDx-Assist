@@ -10,6 +10,8 @@ export async function saveCase(
     data: { user },
   } = await supabaseClient.auth.getUser();
 
+  console.log("Current user:", user);
+
   if (!user) {
     throw new Error("Please login.");
   }
@@ -35,8 +37,8 @@ export async function saveCase(
     .single();
 
   if (error) {
-    console.error(error);
-    throw new Error("Unable to save case.");
+    console.error("Supabase insert error:", error);
+    throw new Error(error.message);
   }
 
   return data.id;
