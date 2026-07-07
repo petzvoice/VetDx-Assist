@@ -7,6 +7,7 @@ import ClinicalReportViewer from "@/components/report/ClinicalReportViewer";
 
 import { generateDiagnosis } from "@/lib/generateDiagnosis";
 import { saveCase } from "@/lib/saveCase";
+import { exportCasePdf } from "@/lib/exportPdf";
 
 import type { AIClinicalReport } from "@/types/ai";
 
@@ -16,8 +17,9 @@ export default function ClinicalAnalysisPage() {
 
   const [report, setReport] =
     useState<AIClinicalReport | null>(null);
-    const [structuredCase, setStructuredCase] =
-  useState<any>(null);
+
+  const [structuredCase, setStructuredCase] =
+    useState<any>(null);
 
   const [error, setError] = useState("");
 
@@ -34,8 +36,9 @@ export default function ClinicalAnalysisPage() {
       setLoading(true);
       setError("");
       setSaved(false);
-setReport(null);
-setStructuredCase(null);
+
+      setReport(null);
+      setStructuredCase(null);
 
       // STEP 1 - Extract structured case
       const extractionResponse = await fetch(
@@ -68,9 +71,10 @@ setStructuredCase(null);
         "Extracted Case:",
         extraction.data
       );
+
       setStructuredCase(extraction.data);
 
-      // STEP 2 - Generate AI report
+      // STEP 2 - Generate AI Report
       const aiReport =
         await generateDiagnosis(
           extraction.data
@@ -83,44 +87,72 @@ setStructuredCase(null);
 
       setReport(aiReport);
       setSaved(false);
+
     } catch (err: any) {
+
       console.error(err);
+
       setStructuredCase(null);
 
       setError(
         err.message ||
           "Unable to analyze the clinical case."
       );
+
     } finally {
+
       setLoading(false);
+
     }
   }
 
   async function handleSaveCase() {
-  if (!report || !structuredCase) return;
 
-  try {
-    setSaving(true);
+    if (!report || !structuredCase) return;
 
-    await saveCase(
+    try {
+
+      setSaving(true);
+
+      await saveCase(
+        structuredCase,
+        report
+      );
+
+      setSaved(true);
+
+      alert("Case saved successfully.");
+
+    } catch (err: any) {
+
+      alert(
+        err.message ||
+          "Unable to save case."
+      );
+
+    } finally {
+
+      setSaving(false);
+
+    }
+  }
+
+  function handleExportPdf() {
+
+    if (!report || !structuredCase) {
+      alert("Please analyze a case first.");
+      return;
+    }
+
+    exportCasePdf(
       structuredCase,
       report
     );
-
-    setSaved(true);
-
-    alert("Case saved successfully.");
-  } catch (err: any) {
-    alert(
-      err.message ||
-        "Unable to save case."
-    );
-  } finally {
-    setSaving(false);
   }
-}
+
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
+
       <div className="mx-auto max-w-5xl">
 
         <h1 className="text-4xl font-bold text-cyan-400">
@@ -135,14 +167,17 @@ setStructuredCase(null);
         </p>
 
         <div className="mt-8 rounded-xl border border-cyan-700 bg-slate-900 p-5">
+
           <h2 className="text-lg font-semibold text-cyan-400">
             🩺 Natural Language Supported
           </h2>
 
           <p className="mt-2 text-slate-300">
-            Write exactly as you normally would. No templates,
-            no forms, and no special formatting required.
+            Write exactly as you normally would.
+            No templates, no forms,
+            and no special formatting required.
           </p>
+
         </div>
 
         <div className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-8">
@@ -163,11 +198,13 @@ setStructuredCase(null);
 
           <div className="mt-5 rounded-lg bg-slate-950 p-4 text-sm text-slate-400">
             💡 You can paste consultation notes,
-            referral notes, discharge summaries,
+            referral notes,
+            discharge summaries,
             or simply describe the case naturally.
           </div>
 
           <div className="mt-8 flex justify-end">
+
             <Button
               onClick={handleAnalyze}
               disabled={loading}
@@ -176,20 +213,24 @@ setStructuredCase(null);
                 ? "Analyzing..."
                 : "Analyze Clinical Case"}
             </Button>
+
           </div>
 
         </div>
 
         <div className="mt-8">
+
           <ClinicalReportViewer
             loading={loading}
             error={error}
             report={report}
             onClearError={() => setError("")}
           />
+
         </div>
 
         {report && (
+
           <div className="mt-8 flex flex-wrap justify-center gap-4">
 
             <Button
@@ -203,28 +244,39 @@ setStructuredCase(null);
                 : "💾 Save Case"}
             </Button>
 
-            <Button variant="secondary">
+            <Button
+              variant="secondary"
+              onClick={handleExportPdf}
+            >
               📄 Export PDF
             </Button>
 
             <Button
               variant="secondary"
               onClick={() => {
+
                 setReport(null);
-                 setStructuredCase(null);
+                setStructuredCase(null);
+
                 setCaseNotes("");
+
                 setError("");
+
                 setSaved(false);
+
                 setSaving(false);
+
               }}
             >
               🆕 New Case
             </Button>
 
           </div>
+
         )}
 
       </div>
+
     </main>
   );
 }

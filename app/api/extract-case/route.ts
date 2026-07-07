@@ -7,6 +7,7 @@ const ai = new GoogleGenAI({
 
 const MODEL = "gemini-2.5-flash";
 
+
 function buildPrompt(notes: string) {
   return `
 You are VetDx Assist.
@@ -50,6 +51,7 @@ Seizures → neurological
 Lameness → musculoskeletal
 Pruritus → dermatology
 Hematuria → urinary
+
 
 Return EXACTLY this JSON:
 
@@ -115,11 +117,14 @@ Return EXACTLY this JSON:
   }
 }
 
+
 Clinical Notes:
 
 ${notes}
 `;
 }
+
+
 
 function cleanResponse(text: string) {
   return text
@@ -128,7 +133,76 @@ function cleanResponse(text: string) {
     .trim();
 }
 
+
+
+// Remove empty fields recursively
+
+function removeEmptyFields(value: any): any {
+
+  if (Array.isArray(value)) {
+
+    const cleanedArray = value
+      .map(removeEmptyFields)
+      .filter(
+        (item) =>
+          item !== "" &&
+          item !== null &&
+          item !== undefined
+      );
+
+
+    return cleanedArray.length > 0
+      ? cleanedArray
+      : undefined;
+  }
+
+
+
+  if (
+    value &&
+    typeof value === "object"
+  ) {
+
+    const cleanedObject: any = {};
+
+
+    Object.entries(value).forEach(
+      ([key, val]) => {
+
+        const cleanedValue =
+          removeEmptyFields(val);
+
+
+        if (
+          cleanedValue !== undefined &&
+          cleanedValue !== ""
+        ) {
+
+          cleanedObject[key] =
+            cleanedValue;
+
+        }
+
+      }
+    );
+
+
+    return Object.keys(cleanedObject).length > 0
+      ? cleanedObject
+      : undefined;
+
+  }
+
+
+  return value === ""
+    ? undefined
+    : value;
+}
+
+
+
 function validateExtractedCase(data: any) {
+
   return (
     data &&
     typeof data === "object" &&
@@ -138,69 +212,157 @@ function validateExtractedCase(data: any) {
     data.physicalExam &&
     data.diagnostics
   );
+
 }
 
+
+
 export async function POST(req: Request) {
+
   try {
-    const { notes } = await req.json();
+
+    const { notes } =
+      await req.json();
+
+
 
     if (!notes || !notes.trim()) {
+
       return NextResponse.json(
         {
           success: false,
-          message: "Clinical notes are required.",
+          message:
+            "Clinical notes are required.",
         },
         {
           status: 400,
         }
       );
+
     }
 
-    const response = await ai.models.generateContent({
-      model: MODEL,
-      contents: buildPrompt(notes),
-    });
 
-    const text = cleanResponse(response.text ?? "");
+
+    const response =
+      await ai.models.generateContent({
+
+        model: MODEL,
+
+        contents:
+          buildPrompt(notes),
+
+      });
+
+
+
+    const text =
+      cleanResponse(
+        response.text ?? ""
+      );
+
+
 
     if (!text) {
-      throw new Error("Gemini returned an empty response.");
+
+      throw new Error(
+        "Gemini returned an empty response."
+      );
+
     }
 
-    const firstBrace = text.indexOf("{");
-    const lastBrace = text.lastIndexOf("}");
 
-    if (firstBrace === -1 || lastBrace === -1) {
-      throw new Error("No JSON object returned.");
+
+    const firstBrace =
+      text.indexOf("{");
+
+
+    const lastBrace =
+      text.lastIndexOf("}");
+
+
+
+    if (
+      firstBrace === -1 ||
+      lastBrace === -1
+    ) {
+
+      throw new Error(
+        "No JSON object returned."
+      );
+
     }
 
-    const json = text.slice(firstBrace, lastBrace + 1);
 
-    const extracted = JSON.parse(json);
+
+    const json =
+      text.slice(
+        firstBrace,
+        lastBrace + 1
+      );
+
+
+
+    const extracted =
+      JSON.parse(json);
+
+
 
     if (!validateExtractedCase(extracted)) {
-      throw new Error("Invalid extracted case structure.");
+
+      throw new Error(
+        "Invalid extracted case structure."
+      );
+
     }
 
+
+
+    const cleanedCase =
+      removeEmptyFields(extracted);
+
+
+
     return NextResponse.json({
+
       success: true,
-      data: extracted,
+
+      data: cleanedCase,
+
     });
+
+
+
   } catch (error: any) {
-    console.error("========== EXTRACT CASE ERROR ==========");
+
+
+    console.error(
+      "========== EXTRACT CASE ERROR =========="
+    );
+
     console.error(error);
-    console.error("========================================");
+
+    console.error(
+      "========================================"
+    );
+
+
 
     return NextResponse.json(
+
       {
         success: false,
+
         message:
           error?.message ??
           "Unable to extract clinical information.",
       },
+
       {
         status: 500,
       }
+
     );
+
   }
+
 }
