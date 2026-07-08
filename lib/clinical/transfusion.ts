@@ -97,18 +97,34 @@ export function generateTransfusionPlan(
   // If patient already meets target PCV
   // no transfusion volume required
 
-  const transfusionVolume =
-    desiredPCV <= recipientPCV
-      ? 0
-      :
+ let effectiveDonorPCV = donorPCV;
+
+
+// Adjust based on blood product
+
+if (bloodProduct === "Packed RBC") {
+
+  effectiveDonorPCV =
+    Math.max(
+      donorPCV,
+      60
+    );
+
+}
+
+
+const transfusionVolume =
+  desiredPCV <= recipientPCV
+    ? 0
+    :
+    (
       (
-        (
-          (desiredPCV - recipientPCV) *
-          estimatedBloodVolume
-        )
-        /
-        donorPCV
-      );
+        (desiredPCV - recipientPCV) *
+        estimatedBloodVolume
+      )
+      /
+      effectiveDonorPCV
+    );
 
 
 
@@ -154,7 +170,7 @@ export function generateTransfusionPlan(
         "Recipient PCV is equal to or above desired PCV. Estimated transfusion volume = 0 mL."
 
         :
-        `((Desired PCV ${desiredPCV}% - Recipient PCV ${recipientPCV}%) × ${estimatedBloodVolume.toFixed(2)} mL) ÷ Donor PCV ${donorPCV}% = ${transfusionVolume.toFixed(2)} mL`,
+        `((Desired PCV ${desiredPCV}% - Recipient PCV ${recipientPCV}%) × ${estimatedBloodVolume.toFixed(2)} mL) ÷ ${bloodProduct} PCV ${effectiveDonorPCV}% = ${transfusionVolume.toFixed(2)} mL`,
     },
 
 

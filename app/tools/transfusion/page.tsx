@@ -40,21 +40,14 @@ export default function BloodTransfusionPage() {
 
     try {
 
-      return generateTransfusionPlan({
-
-        species,
-
-        bloodProduct,
-
-        bodyWeightKg,
-
-        recipientPCV,
-
-        desiredPCV,
-
-        donorPCV,
-
-      });
+     return generateTransfusionPlan({
+  species,
+  bloodProduct: bloodProduct as "Whole Blood" | "Packed RBC",
+  bodyWeightKg,
+  recipientPCV,
+  desiredPCV,
+  donorPCV,
+});
 
 
     } catch {
@@ -63,14 +56,14 @@ export default function BloodTransfusionPage() {
 
     }
 
-  }, [
-    species,
-    bloodProduct,
-    bodyWeightKg,
-    recipientPCV,
-    desiredPCV,
-    donorPCV,
-  ]);
+ }, [
+  species,
+  bloodProduct,
+  bodyWeightKg,
+  recipientPCV,
+  desiredPCV,
+  donorPCV,
+]);
 
 
 
@@ -354,40 +347,72 @@ export default function BloodTransfusionPage() {
 
 
           </section>
+          <section className="mt-8 rounded-2xl border border-slate-700 bg-slate-900 p-6">
+
+  <h2 className="text-xl font-semibold text-cyan-400">
+    Clinical Notes
+  </h2>
+
+  <p className="mt-4 text-slate-300">
+    {plan.interpretation.summary}
+  </p>
+
+  <h3 className="mt-6 text-lg font-semibold text-cyan-300">
+    Clinical Pearls
+  </h3>
+
+  <ul className="mt-4 space-y-3">
+
+    <li className="rounded-lg bg-slate-950 p-3 text-slate-300">
+      • Blood typing and crossmatching should be performed whenever indicated before transfusion.
+    </li>
+
+    <li className="rounded-lg bg-slate-950 p-3 text-slate-300">
+      • Whole blood is generally preferred when both oxygen-carrying capacity and intravascular volume replacement are required.
+    </li>
+
+    <li className="rounded-lg bg-slate-950 p-3 text-slate-300">
+      • Packed RBCs are primarily used to increase oxygen-carrying capacity while minimizing unnecessary volume administration.
+    </li>
+
+    <li className="rounded-lg bg-slate-950 p-3 text-slate-300">
+      • Start transfusions slowly and monitor continuously for acute transfusion reactions, especially during the first 15–30 minutes.
+    </li>
+
+    <li className="rounded-lg bg-slate-950 p-3 text-slate-300">
+      • Reassess PCV/hematocrit, vital parameters and clinical response after transfusion to determine the need for further therapy.
+    </li>
+
+    <li className="rounded-lg bg-slate-950 p-3 text-slate-300">
+      • Always interpret calculated transfusion volumes together with the patient's overall clinical condition and ongoing blood loss.
+    </li>
+
+  </ul>
+
+</section>
 
 
 
           <section className="mt-8 rounded-2xl border border-yellow-600 bg-yellow-950/20 p-6">
 
+  <h2 className="text-xl font-semibold text-yellow-400">
+    Educational & Clinical Support Notice
+  </h2>
 
-            <h2 className="text-xl font-semibold text-yellow-400">
-              Educational Notice
-            </h2>
+  <p className="mt-4 text-sm leading-7 text-slate-300">
+    This calculator is intended solely as an educational and clinical support tool. It performs mathematical calculations based on user-entered values and does not recommend transfusions, prescribe treatment, or replace professional veterinary judgment. Carefully verify all entered data, calculations, blood typing, crossmatching, donor suitability, and transfusion protocols before making clinical decisions or administering any blood product.
+  </p>
 
+</section>
 
-            <p className="mt-4 text-sm text-slate-300">
+</>
 
-              This calculator performs mathematical estimation only.
-              It does not decide whether transfusion is required.
-              Always follow blood typing, crossmatching,
-              monitoring protocols and professional veterinary judgement.
+)}
 
-            </p>
+</div>
 
+</main>
 
-          </section>
-
-
-          </>
-
-        )}
-
-
-
-      </div>
-
-    </main>
-
-  );
+);
 
 }
