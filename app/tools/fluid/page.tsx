@@ -136,7 +136,7 @@ export default function FluidTherapyPage() {
 
                 onChange={(e) =>
                   setWeight(
-                    Number(e.target.value)
+                     Math.max(0, Number(e.target.value))
                   )
                 }
 
@@ -165,7 +165,7 @@ export default function FluidTherapyPage() {
 
                 onChange={(e) =>
                   setDehydration(
-                    Number(e.target.value)
+                     Math.max(0, Number(e.target.value))
                   )
                 }
 
@@ -193,10 +193,10 @@ export default function FluidTherapyPage() {
                 value={ongoingLosses}
 
                 onChange={(e) =>
-                  setOngoingLosses(
-                    Number(e.target.value)
-                  )
-                }
+  setOngoingLosses(
+    Math.max(0, Number(e.target.value))
+  )
+}
 
                 className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 p-3"
 

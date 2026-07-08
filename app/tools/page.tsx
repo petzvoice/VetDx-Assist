@@ -26,13 +26,13 @@ const tools = [
   status: "Available",
 },
 
-  {
-    title: "🩸 Blood Transfusion Planner",
-    description:
-      "Plan transfusion requirements and volume calculations.",
-    href: "#",
-    status: "Coming Soon",
-  },
+ {
+  title: "🩸 Blood Transfusion Planner",
+  description:
+    "Estimate transfusion volume using patient and donor PCV parameters.",
+  href: "/tools/transfusion",
+  status: "Available",
+},
 
   {
     title: "⚡ Emergency Calculator",
