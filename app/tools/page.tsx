@@ -19,12 +19,12 @@ const tools = [
   },
 
   {
-    title: "💉 CRI Planner",
-    description:
-      "Calculate continuous rate infusion requirements for clinical patients.",
-    href: "#",
-    status: "Coming Soon",
-  },
+  title: "💉 CRI Planner",
+  description:
+    "Calculate infusion pump rates for continuous rate infusions using user-entered drug concentration and prescribed dose.",
+  href: "/tools/cri",
+  status: "Available",
+},
 
   {
     title: "🩸 Blood Transfusion Planner",
