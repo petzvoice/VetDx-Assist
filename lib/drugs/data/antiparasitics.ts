@@ -1,3 +1,5 @@
 import { Drug } from "../types";
 
-export const antiparasitics: Drug[] = [];
+const antiparasitics: Drug[] = [];
+
+export default antiparasitics;

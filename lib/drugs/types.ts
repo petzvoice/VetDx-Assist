@@ -163,6 +163,8 @@ export interface DoseReference {
   dose: DoseRange;
 
   basis: DoseBasis;
+  
+  fixedDose?: string;
 
   frequency?: string;
 
@@ -228,6 +230,7 @@ export interface DrugClinical {
 ========================================================== */
 
 export interface DrugQuickFacts {
+
   prescriptionRequired: boolean;
 
   controlledDrug: boolean;
@@ -240,7 +243,10 @@ export interface DrugQuickFacts {
 
   commonRoutes: Route[];
 
+  availableRoutes: Route[];
+
   availableSpecies: Species[];
+
 }
 /* ==========================================================
    MAIN DRUG INTERFACE

@@ -1,7 +1,6 @@
-// lib/drugs/repository.ts
-
 import { Drug, Species } from "./types";
 import { drugs } from "./data";
+
 /**
  * Returns all drugs.
  */
@@ -15,13 +14,15 @@ export function getAllDrugs(): Drug[] {
 export function getDrugById(id: string): Drug | undefined {
   return drugs.find((drug) => drug.id === id);
 }
+
 /**
  * Returns all drugs within a category.
  */
 export function getDrugsByCategory(category: string): Drug[] {
   return drugs.filter(
     (drug) =>
-      drug.category.toLowerCase() === category.toLowerCase()
+      drug.quickFacts.category.toLowerCase() ===
+      category.toLowerCase()
   );
 }
 
@@ -38,12 +39,20 @@ export function getDrugsBySpecies(species: Species): Drug[] {
  * Returns all unique categories.
  */
 export function getCategories(): string[] {
-  return [...new Set(drugs.map((drug) => drug.category))].sort();
+  return [
+    ...new Set(
+      drugs.map((drug) => drug.quickFacts.category)
+    ),
+  ].sort();
 }
 
 /**
  * Returns all unique drug classes.
  */
 export function getDrugClasses(): string[] {
-  return [...new Set(drugs.map((drug) => drug.drugClass))].sort();
+  return [
+    ...new Set(
+      drugs.map((drug) => drug.quickFacts.drugClass)
+    ),
+  ].sort();
 }

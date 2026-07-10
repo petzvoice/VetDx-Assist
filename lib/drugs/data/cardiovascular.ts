@@ -1,3 +1,5 @@
 import { Drug } from "../types";
 
-export const cardiovascular: Drug[] = [];
+const cardiovascular: Drug[] = [];
+
+export default cardiovascular;

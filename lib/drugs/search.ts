@@ -1,35 +1,111 @@
-// lib/drugs/search.ts
-
 import { Drug } from "./types";
-import { getAllDrugs } from "./repository";
+
 
 /**
- * Performs a case-insensitive search across the drug database.
+ * Searches the veterinary drug database.
+ *
+ * Supports:
+ * - Generic name
+ * - Brand names
+ * - Search aliases
+ * - Drug class
+ * - Pharmacologic class
+ * - Category
+ * - Indications
+ * - Common clinical uses
+ * - Mechanism of action
  */
-export function searchDrugs(query: string): Drug[] {
+export function searchDrugs(
+  drugs: Drug[],
+  query: string
+): Drug[] {
+
+
   const search = query.trim().toLowerCase();
 
+
+
   if (!search) {
-    return getAllDrugs();
+    return drugs;
   }
 
-  return getAllDrugs().filter((drug) => {
+
+
+  return drugs.filter((drug) => {
+
+
+    const clinicalText = [
+
+      ...drug.clinical.indications,
+
+      ...drug.clinical.commonUses,
+
+      drug.clinical.mechanismOfAction,
+
+    ]
+      .join(" ")
+      .toLowerCase();
+
+
+
     return (
-      drug.genericName.toLowerCase().includes(search) ||
+
+      drug.genericName
+        .toLowerCase()
+        .includes(search)
+
+
+
+      ||
 
       drug.brandNames.some((brand) =>
-        brand.toLowerCase().includes(search)
-      ) ||
-
-      drug.drugClass.toLowerCase().includes(search) ||
-
-      drug.pharmacologicClass.toLowerCase().includes(search) ||
-
-      drug.category.toLowerCase().includes(search) ||
-
-      drug.commonUses.some((use) =>
-        use.toLowerCase().includes(search)
+        brand
+          .toLowerCase()
+          .includes(search)
       )
+
+
+
+      ||
+
+      drug.searchTerms.some((term) =>
+        term
+          .toLowerCase()
+          .includes(search)
+      )
+
+
+
+      ||
+
+      drug.quickFacts.drugClass
+        .toLowerCase()
+        .includes(search)
+
+
+
+      ||
+
+      drug.quickFacts.pharmacologicClass
+        .toLowerCase()
+        .includes(search)
+
+
+
+      ||
+
+      drug.quickFacts.category
+        .toLowerCase()
+        .includes(search)
+
+
+
+      ||
+
+      clinicalText.includes(search)
+
     );
+
   });
+
 }

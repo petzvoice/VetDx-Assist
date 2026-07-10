@@ -1,3 +1,5 @@
 import { Drug } from "../types";
 
-export const emergency: Drug[] = [];
+const emergency: Drug[] = [];
+
+export default emergency;
