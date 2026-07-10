@@ -5,7 +5,7 @@ import {
   DoseUnit,
   Drug,
   DrugStatus,
-  PregnancyCategory,
+ ReproductionRecommendation,
   Route,
   Species,
 } from "../types";
@@ -208,8 +208,55 @@ availableRoutes: [
     ],
   },
 
+reproduction: {
+  pregnancy: {
+    recommendation:
+      ReproductionRecommendation.BENEFIT_RISK,
 
-  safety: {
+    notes: [
+      "Use only after veterinary risk-benefit assessment.",
+    ],
+  },
+
+  lactation: {
+    recommendation:
+      ReproductionRecommendation.NOT_ESTABLISHED,
+
+    notes: [
+      "Safety during lactation has not been established.",
+    ],
+  },
+
+  breeding: {
+    recommendation:
+      ReproductionRecommendation.NOT_ESTABLISHED,
+
+    notes: [
+      "Safety in breeding animals has not been established.",
+    ],
+  },
+},
+
+overdose: {
+  signs: [
+    "Vomiting",
+    "Diarrhea",
+    "Gastrointestinal ulceration",
+    "Renal injury",
+    "Lethargy",
+  ],
+
+  management: [
+    "Discontinue the drug immediately.",
+  "Initiate gastrointestinal decontamination when appropriate.",
+  "Provide aggressive supportive care and intravenous fluid therapy as indicated.",
+  "Administer gastroprotective therapy when clinically indicated.",
+  "Monitor renal function, hydration status, and urine output.",
+  "Monitor for gastrointestinal ulceration and bleeding.",
+  ],
+},
+
+safety: {
     contraindications: [
       "Known hypersensitivity to meloxicam or NSAIDs.",
       "Patients with active gastrointestinal ulceration or bleeding.",
@@ -245,15 +292,7 @@ availableRoutes: [
       "Evaluate pain control and clinical response.",
     ],
 
-    pregnancy: {
-      category: PregnancyCategory.USE_WITH_CAUTION,
-
-      notes:
-        "Use only after veterinary risk-benefit assessment and according to product information.",
-    },
-
-    lactation:
-      "Use according to species-specific product information and veterinary assessment.",
+   
 
     storage: [
       "Store according to manufacturer recommendations.",

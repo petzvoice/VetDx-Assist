@@ -5,7 +5,7 @@ import {
   DoseUnit,
   Drug,
   DrugStatus,
-  PregnancyCategory,
+  ReproductionRecommendation,
   Route,
   Species,
 } from "../../types";
@@ -214,8 +214,54 @@ availableRoutes: [
       "Culture and susceptibility testing are recommended for recurrent, deep, severe, or non-responsive infections.",
     ],
   },
+reproduction: {
+  pregnancy: {
+    recommendation:
+      ReproductionRecommendation.BENEFIT_RISK,
 
-  safety: {
+    notes: [
+      "Use only after veterinary risk-benefit assessment.",
+    ],
+  },
+
+  lactation: {
+    recommendation:
+      ReproductionRecommendation.BENEFIT_RISK,
+
+    notes: [
+      "Use only after veterinary risk-benefit assessment.",
+    ],
+  },
+
+  breeding: {
+    recommendation:
+      ReproductionRecommendation.NOT_ESTABLISHED,
+
+    notes: [
+      "Safety in breeding animals has not been established.",
+    ],
+  },
+},
+
+overdose: {
+  signs: [
+    "Vomiting",
+    "Diarrhea",
+    "Hypersalivation",
+    "Loss of appetite",
+  ],
+
+  management: [
+    "Discontinue the drug.",
+  "Provide symptomatic and supportive care.",
+  "Maintain hydration and electrolyte balance.",
+  "Consider gastrointestinal protectants when clinically indicated.",
+  "Monitor renal function in severe overdose.",
+  "Monitor the patient until clinical signs resolve.",
+  ],
+},
+
+safety: {
     contraindications: [
       "Known hypersensitivity to penicillins.",
       "Known hypersensitivity to beta-lactam antibiotics.",
@@ -246,14 +292,7 @@ availableRoutes: [
       "Monitor for allergic reactions.",
     ],
 
-    pregnancy: {
-      category: PregnancyCategory.USE_WITH_CAUTION,
-      notes:
-        "Use after veterinary risk-benefit assessment and according to product labeling.",
-    },
 
-    lactation:
-      "Use after veterinary risk-benefit assessment.",
 
     storage: [
       "Store according to manufacturer recommendations.",

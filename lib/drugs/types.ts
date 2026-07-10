@@ -90,13 +90,14 @@ export enum DoseBasis {
   PER_ANIMAL = "Per Animal",
 }
 
-export enum PregnancyCategory {
-  SAFE = "Generally Considered Safe",
-  USE_WITH_CAUTION = "Use With Caution",
-  AVOID = "Avoid If Possible",
+export enum ReproductionRecommendation {
+  COMPATIBLE = "Compatible",
+  BENEFIT_RISK = "Use only if benefits outweigh risks",
+  AVOID = "Avoid",
   CONTRAINDICATED = "Contraindicated",
-  UNKNOWN = "Unknown",
+  NOT_ESTABLISHED = "Safety not established",
 }
+
 export enum DrugStatus {
   ACTIVE = "Active",
   LIMITED = "Limited",
@@ -194,19 +195,34 @@ export interface DrugSafety {
 
   monitoring: string[];
 
-  pregnancy: {
-    category: PregnancyCategory;
 
-    notes: string;
-  };
-
-  lactation: string;
 
   withdrawalPeriod?: string;
 
   storage: string[];
 }
+export interface DrugReproduction {
+  pregnancy: {
+    recommendation: ReproductionRecommendation;
+    notes: string[];
+  };
 
+  lactation: {
+    recommendation: ReproductionRecommendation;
+    notes: string[];
+  };
+
+  breeding: {
+    recommendation: ReproductionRecommendation;
+    notes: string[];
+  };
+}
+
+export interface DrugOverdose {
+  signs: string[];
+
+  management: string[];
+}
 /* ==========================================================
    CLINICAL
 ========================================================== */
@@ -294,6 +310,14 @@ export interface Drug {
   -------------------------------------------------------- */
 
   clinical: DrugClinical;
+
+  /* --------------------------------------------------------
+   Reproduction
+-------------------------------------------------------- */
+  reproduction: DrugReproduction;
+
+
+  overdose: DrugOverdose;
 
   /* --------------------------------------------------------
      Safety

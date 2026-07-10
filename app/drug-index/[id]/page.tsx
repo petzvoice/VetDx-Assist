@@ -7,6 +7,8 @@ import Formulations from "@/components/drugs/details/Formulations";
 import DoseReferences from "@/components/drugs/details/DoseReferences";
 import ClinicalInfo from "@/components/drugs/details/ClinicalInfo";
 import ClinicalPearls from "@/components/drugs/details/ClinicalPearls";
+import ReproductionInfo from "@/components/drugs/details/ReproductionInfo";
+import OverdoseInfo from "@/components/drugs/details/OverdoseInfo";
 import SafetyInfo from "@/components/drugs/details/SafetyInfo";
 import References from "@/components/drugs/details/References";
 
@@ -55,7 +57,7 @@ export default async function DrugDetailsPage({
 
 
         <DrugHeader drug={drug} />
-        
+
         <DrugDisclaimer />
 
 
@@ -72,6 +74,10 @@ export default async function DrugDetailsPage({
 
 
         <ClinicalPearls drug={drug} />
+
+        <ReproductionInfo drug={drug} />
+
+        <OverdoseInfo drug={drug} />
 
 
         <SafetyInfo drug={drug} />
