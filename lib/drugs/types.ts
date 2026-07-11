@@ -15,18 +15,16 @@
 export enum Species {
   DOG = "Dog",
   CAT = "Cat",
-  CATTLE = "Cattle",
-  BUFFALO = "Buffalo",
   HORSE = "Horse",
+  CATTLE = "Cattle",
   SHEEP = "Sheep",
   GOAT = "Goat",
   PIG = "Pig",
   RABBIT = "Rabbit",
-  CAMEL = "Camel",
+  GUINEA_PIG = "Guinea Pig",
+  FERRET = "Ferret",
   BIRD = "Bird",
-  OTHER = "Other",
 }
-
 export enum Route {
   PO = "PO",
   IV = "IV",
@@ -66,6 +64,7 @@ export enum DosageForm {
 
 export enum ConcentrationUnit {
   MG_PER_ML = "mg/mL",
+  MG_PER_LITER = "mg/L",
   MG_PER_TABLET = "mg/tablet",
   MG_PER_CAPSULE = "mg/capsule",
   MG_PER_BOLUS = "mg/bolus",
@@ -77,6 +76,8 @@ export enum ConcentrationUnit {
 
 export enum DoseUnit {
   MG_PER_KG = "mg/kg",
+   MG = "mg",
+   MG_PER_LITER = "mg/L",
   MCG_PER_KG = "mcg/kg",
   MG_PER_M2 = "mg/m²",
   IU_PER_KG = "IU/kg",
@@ -86,16 +87,20 @@ export enum DoseUnit {
 }
 export enum DoseBasis {
   BODY_WEIGHT = "Body Weight",
+  FIXED_DOSE = "Fixed Dose",
+  FIXED_CONCENTRATION = "fixed_concentration",
   BODY_SURFACE_AREA = "Body Surface Area",
   PER_ANIMAL = "Per Animal",
 }
 
 export enum ReproductionRecommendation {
   COMPATIBLE = "Compatible",
+  GENERALLY_SAFE = "generally_safe",
   BENEFIT_RISK = "Use only if benefits outweigh risks",
   AVOID = "Avoid",
   CONTRAINDICATED = "Contraindicated",
   NOT_ESTABLISHED = "Safety not established",
+  USE_WITH_CAUTION = "Use With Caution",
 }
 
 export enum DrugStatus {

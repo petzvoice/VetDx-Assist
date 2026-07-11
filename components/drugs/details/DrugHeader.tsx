@@ -7,7 +7,6 @@ interface DrugHeaderProps {
 export default function DrugHeader({
   drug,
 }: DrugHeaderProps) {
-
   return (
     <div>
 
@@ -15,8 +14,21 @@ export default function DrugHeader({
         {drug.genericName}
       </h1>
 
+      {drug.brandNames.length > 0 && (
+        <div className="mt-3">
 
-      <p className="mt-2 text-gray-400">
+          <p className="text-sm font-semibold uppercase tracking-wide text-gray-400">
+            Brand Names
+          </p>
+
+          <p className="mt-1 text-gray-200">
+            {drug.brandNames.join(", ")}
+          </p>
+
+        </div>
+      )}
+
+      <p className="mt-4 text-gray-400">
         {drug.quickFacts.drugClass}
       </p>
 
