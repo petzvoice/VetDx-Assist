@@ -8,7 +8,7 @@ import {
  ReproductionRecommendation,
   Route,
   Species,
-} from "../types";
+} from "../../types";
 
 const meloxicam: Drug = {
   id: "meloxicam",

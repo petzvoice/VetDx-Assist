@@ -34,20 +34,25 @@ export enum Route {
   IO = "IO",
   IT = "IT",
   IN = "IN",
-  TOPICAL = "Topical",
-  OTIC = "Otic",
-  OPHTHALMIC = "Ophthalmic",
   INHALATION = "Inhalation",
   RECTAL = "Rectal",
   TRANSDERMAL = "Transdermal",
+  TOPICAL = "Topical",
+  OPHTHALMIC = "Ophthalmic",
+  OTIC = "Otic",
+  INTRANASAL = "Intranasal",
+  INTRA_ARTICULAR = "Intra-articular",
+  INTRAMAMMARY = "Intramammary",
   OTHER = "Other",
 }
 
 export enum DosageForm {
   TABLET = "Tablet",
   CAPSULE = "Capsule",
+  CHEWABLE_TABLET = "CHEWABLE_TABLET",
   INJECTION = "Injection",
   ORAL_SUSPENSION = "Oral Suspension",
+  ORAL_PASTE = "ORAL_PASTE",
   ORAL_SOLUTION = "Oral Solution",
   POWDER = "Powder",
   BOLUS = "Bolus",
@@ -59,11 +64,13 @@ export enum DosageForm {
   EAR_DROPS = "Ear Drops",
   EYE_DROPS = "Eye Drops",
   IMPLANT = "Implant",
+  INTRAMAMMARY_INFUSION = "Intramammary Infusion",
   OTHER = "Other",
 }
 
 export enum ConcentrationUnit {
   MG_PER_ML = "mg/mL",
+  MG_PER_G = "MG_PER_G",
   MG_PER_LITER = "mg/L",
   MG_PER_TABLET = "mg/tablet",
   MG_PER_CAPSULE = "mg/capsule",
