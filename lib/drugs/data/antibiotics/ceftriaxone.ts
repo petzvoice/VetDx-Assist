@@ -18,6 +18,7 @@ const ceftriaxone: Drug = {
     "Topcef Vet",
     "Rocephin",
     "Monocef",
+    "Intacef",
     "Xone",
     "Oframax",
     "C-Tri",

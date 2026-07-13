@@ -65,11 +65,13 @@ export enum DosageForm {
   EYE_DROPS = "Eye Drops",
   IMPLANT = "Implant",
   INTRAMAMMARY_INFUSION = "Intramammary Infusion",
+  POUR_ON = "Pour-on",
   OTHER = "Other",
 }
 
 export enum ConcentrationUnit {
   MG_PER_ML = "mg/mL",
+  MG = "mg",
   MG_PER_G = "MG_PER_G",
   MG_PER_LITER = "mg/L",
   MG_PER_TABLET = "mg/tablet",
@@ -102,6 +104,7 @@ export enum DoseBasis {
 
 export enum ReproductionRecommendation {
   COMPATIBLE = "Compatible",
+  SAFE = "Safe",
   GENERALLY_SAFE = "generally_safe",
   BENEFIT_RISK = "Use only if benefits outweigh risks",
   AVOID = "Avoid",
