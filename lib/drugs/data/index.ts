@@ -7,6 +7,7 @@ import antiparasitics from "./antiparasitics";
 import cardiovascular from "./cardiovascular";
 import emergency from "./emergency";
 import nsaids from "./nsaids";
+import corticosteroids from "./corticosteroids";
 
 /**
  * Master Drug Database
@@ -19,4 +20,5 @@ export const drugs: Drug[] = [
   ...cardiovascular,
   ...emergency,
   ...nsaids,
+  ...corticosteroids,
 ];
