@@ -54,6 +54,7 @@ export enum DosageForm {
   INJECTION = "Injection",
   INJECTABLE_SUSPENSION = "Injectable Suspension",
   INJECTABLE_SOLUTION = "Injectable Solution",
+  INJECTABLE_EMULSION = "Injectable Emulsion",
   POWDER_FOR_INJECTION = "Powder for Injection",
   ORAL_SUSPENSION = "Oral Suspension",
   ORAL_PASTE = "ORAL_PASTE",
@@ -100,6 +101,7 @@ export enum DoseUnit {
   IU_PER_KG = "IU/kg",
   MEQ_PER_KG = "mEq/kg",
   MG_PER_KG_HR = "mg/kg/hr",
+  MG_PER_KG_PER_MIN = "mg/kg/min",
   MCG_PER_KG_MIN = "mcg/kg/min",
 }
 export enum DoseBasis {
