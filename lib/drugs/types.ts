@@ -20,10 +20,13 @@ export enum Species {
   SHEEP = "Sheep",
   GOAT = "Goat",
   PIG = "Pig",
+  SWINE = "Swine",
   RABBIT = "Rabbit",
   GUINEA_PIG = "Guinea Pig",
   FERRET = "Ferret",
   BIRD = "Bird",
+  EXOTIC_MAMMAL = "Exotic Mammal",
+  REPTILE = "Reptile",
 }
 export enum Route {
   PO = "PO",
@@ -59,6 +62,7 @@ export enum DosageForm {
   ORAL_SUSPENSION = "Oral Suspension",
   ORAL_PASTE = "ORAL_PASTE",
   ORAL_SOLUTION = "Oral Solution",
+  INHALATION_LIQUID = "Inhalation Liquid",
   POWDER = "Powder",
   BOLUS = "Bolus",
   CREAM = "Cream",
@@ -103,6 +107,7 @@ export enum DoseUnit {
   MG_PER_KG_HR = "mg/kg/hr",
   MG_PER_KG_PER_MIN = "mg/kg/min",
   MCG_PER_KG_MIN = "mcg/kg/min",
+  PERCENT = "%",
 }
 export enum DoseBasis {
   BODY_WEIGHT = "Body Weight",
@@ -110,6 +115,7 @@ export enum DoseBasis {
   FIXED_CONCENTRATION = "fixed_concentration",
   BODY_SURFACE_AREA = "Body Surface Area",
   PER_ANIMAL = "Per Animal",
+  CONCENTRATION = "Concentration",
 }
 
 export enum ReproductionRecommendation {
