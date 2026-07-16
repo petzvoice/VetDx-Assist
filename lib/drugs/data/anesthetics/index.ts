@@ -9,6 +9,9 @@ import sevoflurane from "./sevoflurane";
 import acepromazine from "./acepromazine";
 import xylazine from "./xylazine";
 import yohimbine from "./yohimbine";
+import atropine from "./atropine";
+import diazepam from "./diazepam";
+
 
 
 
@@ -24,6 +27,8 @@ const anesthetics: Drug[] = [
   ...acepromazine,
   ...xylazine,
   ...yohimbine,
+  ...atropine,
+  ...diazepam,
   
 ];
 

@@ -414,40 +414,7 @@ const tiletamine_zolazepam: Drug = {
       reference:
         "Plumb's Veterinary Drug Handbook",
     },
-        {
-      species: Species.EXOTIC_MAMMAL,
-
-      indication:
-        "Chemical restraint in carnivorous mammals",
-
-      route: Route.IM,
-
-      dose: {
-        minimum: 2,
-        maximum: 4,
-        unit: DoseUnit.MG_PER_KG,
-      },
-
-      basis: DoseBasis.BODY_WEIGHT,
-
-      frequency:
-        "Single restraint dose",
-
-      duration:
-        "Species and individual dependent",
-
-      maximumTotalDose:
-        "",
-
-      notes:
-        "Reported for carnivorous mammals excluding large exotic cats such as tigers. Significant interspecies variation exists.",
-
-      evidence:
-        "Suedmeyer 2003",
-
-      reference:
-        "Plumb's Veterinary Drug Handbook",
-    },
+      
 
 
     {

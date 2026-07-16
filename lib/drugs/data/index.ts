@@ -8,6 +8,8 @@ import cardiovascular from "./cardiovascular";
 import emergency from "./emergency";
 import nsaids from "./nsaids";
 import corticosteroids from "./corticosteroids";
+import opioids from "./opioids";
+import gastrointestinal from "./gastrointestinal";
 
 /**
  * Master Drug Database
@@ -21,4 +23,6 @@ export const drugs: Drug[] = [
   ...emergency,
   ...nsaids,
   ...corticosteroids,
+  ...opioids,
+   ...gastrointestinal,
 ];
