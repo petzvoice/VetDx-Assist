@@ -58,7 +58,7 @@ const doxycycline: Drug = {
 
   controlledDrug: false,
 
-  category: "Antibacterial",
+  category: "Antibiotics",
 
   drugClass: "Tetracycline antibiotic",
 

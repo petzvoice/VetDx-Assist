@@ -73,7 +73,7 @@ const penicillinG: Drug = {
 
     controlledDrug: false,
 
-    category: "Antibacterial",
+    category: "Antibiotic",
 
     drugClass: "Penicillin antibiotic",
 

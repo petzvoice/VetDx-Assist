@@ -82,7 +82,7 @@ quickFacts: {
 
   controlledDrug: false,
 
-  category: "Antibacterial",
+  category: "Antibiotics",
 
   drugClass: "Third-generation cephalosporin",
 

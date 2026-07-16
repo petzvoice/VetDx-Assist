@@ -75,7 +75,7 @@ const metronidazole: Drug = {
 
     controlledDrug: false,
 
-    category: "Antibacterial, Antiprotozoal",
+    category: "Antibiotics, Antiprotozoal",
 
     drugClass: "Nitroimidazole",
 
