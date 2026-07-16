@@ -51,7 +51,29 @@ export default function DashboardPage() {
 
           </div>
 
+<div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
 
+  <h2 className="text-xl font-semibold">
+    💊 Drug Index
+  </h2>
+
+  <p className="mt-3 text-sm text-slate-400">
+    Browse veterinary drug monographs, formulations, dose references and clinical information.
+  </p>
+
+  <div className="mt-6">
+
+    <Button
+      variant="secondary"
+      fullWidth
+      onClick={() => router.push("/drug-index")}
+    >
+      Open Drug Index
+    </Button>
+
+  </div>
+
+</div>
 
 
 
