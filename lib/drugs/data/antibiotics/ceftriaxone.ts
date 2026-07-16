@@ -64,7 +64,7 @@ const ceftriaxone: Drug = {
 
     controlledDrug: false,
 
-    category: "Antibiotics",
+    category: "Antibiotic",
 
     drugClass: "Third-generation cephalosporin",
 

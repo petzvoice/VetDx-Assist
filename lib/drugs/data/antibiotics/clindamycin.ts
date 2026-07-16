@@ -83,7 +83,7 @@ const clindamycin: Drug = {
 
     controlledDrug: false,
 
-    category: "Antibiotics",
+    category: "Antibiotic",
 
     drugClass: "Lincosamide antibiotic",
 

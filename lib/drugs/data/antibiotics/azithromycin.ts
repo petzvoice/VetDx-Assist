@@ -67,7 +67,7 @@ const azithromycin: Drug = {
 
     controlledDrug: false,
 
-    category: "Antibiotics",
+    category: "Antibiotic",
 
     drugClass: "Macrolide antibiotic",
 

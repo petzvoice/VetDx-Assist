@@ -63,7 +63,7 @@ const cefpodoxime: Drug = {
 
     controlledDrug: false,
 
-    category: "Antibacterial",
+    category: "Antibiotic",
 
     drugClass: "Third-generation cephalosporin",
 

@@ -70,7 +70,7 @@ const cephalexin: Drug = {
 
   controlledDrug: false,
 
-  category: "Antibiotics",
+  category: "Antibiotic",
 
   drugClass: "First-generation cephalosporin",
 

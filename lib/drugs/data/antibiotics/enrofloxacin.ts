@@ -69,7 +69,7 @@ const enrofloxacin: Drug = {
 
 
     category:
-      "Antibiotics",
+      "Antibiotic",
 
 
     drugClass:
