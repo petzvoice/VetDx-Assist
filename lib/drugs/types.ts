@@ -182,10 +182,16 @@ export interface DrugFormulation {
   concentration: Concentration;
 
   routes: Route[];
+  // For powder injections with multiple vial sizes
+  vialStrengths?: number[];
+  // For known reconstituted concentrations
+  standardConcentration?: number;
+
 
   notes?: string;
 
   speciesNotes?: Partial<Record<Species, string>>;
+  
 }
 
 /* ==========================================================

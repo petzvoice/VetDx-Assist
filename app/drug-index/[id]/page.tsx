@@ -11,6 +11,7 @@ import ReproductionInfo from "@/components/drugs/details/ReproductionInfo";
 import OverdoseInfo from "@/components/drugs/details/OverdoseInfo";
 import SafetyInfo from "@/components/drugs/details/SafetyInfo";
 import References from "@/components/drugs/details/References";
+import DoseCalculator from "@/components/drugs/DoseCalculator";
 
 
 interface DrugDetailsPageProps {
@@ -84,6 +85,8 @@ export default async function DrugDetailsPage({
 
 
         <References drug={drug} />
+
+        <DoseCalculator drug={drug} />
 
 
       </div>

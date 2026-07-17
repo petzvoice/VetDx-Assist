@@ -99,7 +99,7 @@ const ceftriaxone: Drug = {
     {
       id: "injectable-powder",
 
-      dosageForm: DosageForm.INJECTION,
+      dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
       strength:
         "250 mg/vial, 500 mg/vial, 1 g/vial, 2 g/vial",
@@ -113,6 +113,12 @@ const ceftriaxone: Drug = {
         Route.IV,
         Route.IM,
       ],
+      vialStrengths: [
+  250,
+  500,
+  1000,
+  2000,
+],
     },
   ],
   doseReferences: [

@@ -75,57 +75,63 @@ const meropenem: Drug = {
 
   formulations: [
     {
-      id: "inj-500",
+  id: "inj-500",
 
-      dosageForm: DosageForm.POWDER_FOR_INJECTION,
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
-      strength: "500 mg/vial",
+  strength: "500 mg/vial",
 
-      concentration: {
-        value: 500,
-        unit: ConcentrationUnit.MG,
-      },
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
 
-      routes: [
-        Route.IV,
-        Route.SC,
-      ],
-    },
+  vialStrengths: [500],
 
-    {
-      id: "inj-1000",
+  routes: [
+    Route.IV,
+    Route.SC,
+  ],
+},
 
-      dosageForm: DosageForm.POWDER_FOR_INJECTION,
+{
+  id: "inj-1000",
 
-      strength: "1 g/vial",
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
-      concentration: {
-        value: 1000,
-        unit: ConcentrationUnit.MG,
-      },
+  strength: "1 g/vial",
 
-      routes: [
-        Route.IV,
-        Route.SC,
-      ],
-    },
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
 
-    {
-      id: "inj-2000",
+  vialStrengths: [1000],
 
-      dosageForm: DosageForm.POWDER_FOR_INJECTION,
+  routes: [
+    Route.IV,
+    Route.SC,
+  ],
+},
 
-      strength: "2 g/vial",
+{
+  id: "inj-2000",
 
-      concentration: {
-        value: 2000,
-        unit: ConcentrationUnit.MG,
-      },
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
-      routes: [
-        Route.IV,
-        Route.SC,
-      ],
+  strength: "2 g/vial",
+
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
+
+  vialStrengths: [2000],
+
+  routes: [
+    Route.IV,
+    Route.SC,
+  ],
     },
   ],
 

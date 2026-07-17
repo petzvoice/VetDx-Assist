@@ -124,7 +124,7 @@ formulations: [
   {
     id: "injectable-suspension-50",
 
-    dosageForm: DosageForm.INJECTION,
+   dosageForm: DosageForm.INJECTION,
 
     strength: "50 mg/mL (Ceftiofur hydrochloride)",
 

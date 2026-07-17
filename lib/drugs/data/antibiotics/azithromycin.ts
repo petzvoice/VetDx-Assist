@@ -147,22 +147,26 @@ const azithromycin: Drug = {
       ],
     },
 
-    {
-      id: "injection",
+   {
+  id: "injection",
 
-      dosageForm: DosageForm.INJECTION,
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
-      strength: "500 mg/vial",
+  strength: "500 mg/vial",
 
-      concentration: {
-        value: 0,
-        unit: ConcentrationUnit.OTHER,
-      },
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
 
-      routes: [
-        Route.IV,
-      ],
-    },
+  vialStrengths: [
+    500,
+  ],
+
+  routes: [
+    Route.IV,
+  ],
+}
   ],
 doseReferences: [
 

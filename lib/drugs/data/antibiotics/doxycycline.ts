@@ -106,20 +106,25 @@ const doxycycline: Drug = {
   },
 
   {
-    id: "injection",
+  id: "injection",
 
-    dosageForm: DosageForm.INJECTION,
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
-    strength: "100 mg, 200 mg",
+  strength: "Powder for Injection",
 
-    concentration: {
-      value: 0,
-      unit: ConcentrationUnit.OTHER,
-    },
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
 
-    routes: [
-      Route.IV,
-    ],
+  vialStrengths: [
+    100,
+    200,
+  ],
+
+  routes: [
+    Route.IV,
+  ],
   },
 
   {

@@ -127,7 +127,7 @@ const pantoprazole: Drug = {
         value: 40,
         unit: ConcentrationUnit.MG,
       },
-
+ standardConcentration: 4,
       routes: [
         Route.IV,
       ],

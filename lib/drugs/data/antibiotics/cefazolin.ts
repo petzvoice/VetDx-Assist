@@ -80,21 +80,27 @@ const cefazolin: Drug = {
   formulations: [
 
     {
-      id: "cefazolin-injection",
+  id: "cefazolin-injection",
 
-      dosageForm: DosageForm.INJECTION,
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
-      strength: "250 mg, 500 mg, 1 g vial",
+  strength: "Powder for Injection",
 
-      concentration: {
-        value: 100,
-        unit: ConcentrationUnit.MG_PER_ML,
-      },
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
 
-      routes: [
-        Route.IV,
-        Route.IM,
-      ],
+  vialStrengths: [
+    250,
+    500,
+    1000,
+  ],
+
+  routes: [
+    Route.IV,
+    Route.IM,
+  ],
 
       notes:
         "Powder for reconstitution before administration.",

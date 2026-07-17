@@ -74,17 +74,23 @@ const ampicillin: Drug = {
 
   formulations: [
     {
-      id: "inj-500",
-      dosageForm: DosageForm.INJECTION,
-      strength: "500 mg/vial",
-      concentration: {
-        value: 500,
-        unit: ConcentrationUnit.OTHER,
-      },
-      routes: [
-        Route.IV,
-        Route.IM,
-        Route.SC,
+  id: "inj-500",
+
+  dosageForm: DosageForm.POWDER_FOR_INJECTION,
+
+  strength: "500 mg/vial",
+
+  concentration: {
+    value: 0,
+    unit: ConcentrationUnit.OTHER,
+  },
+
+  vialStrengths: [500],
+
+  routes: [
+    Route.IV,
+    Route.IM,
+    Route.SC,
       ],
     },
   ],

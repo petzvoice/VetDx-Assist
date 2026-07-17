@@ -112,7 +112,7 @@ const penicillinG: Drug = {
     {
       id: "penicillin-g-sodium",
 
-      dosageForm: DosageForm.INJECTION,
+      dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
       strength:
         "1 million IU/vial, 5 million IU/vial, 10 million IU/vial, 20 million IU/vial",
@@ -131,7 +131,7 @@ const penicillinG: Drug = {
     {
       id: "penicillin-g-potassium",
 
-      dosageForm: DosageForm.INJECTION,
+      dosageForm: DosageForm.POWDER_FOR_INJECTION,
 
       strength:
         "1 million IU/vial, 5 million IU/vial, 10 million IU/vial",
