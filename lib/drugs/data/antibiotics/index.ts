@@ -11,6 +11,7 @@ import metronidazole from "./metronidazole";
 import clindamycin from "./clindamycin";
 import azithromycin from "./azithromycin";
 import ceftiofur from "./ceftiofur";
+import meropenem from "./meropenem";
 
 
 import { Drug } from "../../types";
@@ -29,6 +30,7 @@ const antibiotics: Drug[] = [
   ...clindamycin,
   ...azithromycin,
   ...ceftiofur,
+   ...meropenem,
 ];
 
 export default antibiotics;
