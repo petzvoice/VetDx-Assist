@@ -1,5 +1,4 @@
 "use client";
-
 import { useMemo, useState } from "react";
 
 import {
@@ -8,6 +7,9 @@ import {
   Species,
   DoseUnit,
   ConcentrationUnit,
+  Route,
+  DoseBasis,
+  DosageForm,
 } from "@/lib/drugs/types";
 
 
@@ -85,6 +87,19 @@ export default function DoseCalculator({
 
   const [weight, setWeight] =
     useState("");
+  const [useCustomDose, setUseCustomDose] =
+  useState(false);
+
+  const [customDoseMin, setCustomDoseMin] =
+  useState("");
+
+const [customDoseMax, setCustomDoseMax] =
+  useState("");
+
+const [customDoseUnit, setCustomDoseUnit] =
+  useState<DoseUnit>(
+    DoseUnit.MG_PER_KG
+  );
 
     const [useCustomFormulation, setUseCustomFormulation] =
   useState(false);
@@ -96,6 +111,10 @@ const [customStrength, setCustomStrength] =
   useState("");
   const [selectedVialStrength, setSelectedVialStrength] =
   useState<number | "">("");
+
+  const [selectedTabletStrength, setSelectedTabletStrength] =
+  useState<number | "">("");
+
 const [reconstitutionVolume, setReconstitutionVolume] =
   useState("");
 const [useStandardConcentration, setUseStandardConcentration] =
@@ -126,8 +145,50 @@ const [useStandardConcentration, setUseStandardConcentration] =
     selectedDoseIndex,
   ]);
 
+ const currentDose = useMemo(() => {
+
+  if (useCustomDose) {
+
+    const min = Number(customDoseMin);
+
+    if (!min || min <= 0) {
+      return null;
+    }
+
+    return {
+      species: species as Species,
+
+      indication: "Custom Dose",
+
+      route: Route.IV,
+
+      basis: DoseBasis.BODY_WEIGHT,
+
+      frequency: "Custom",
+
+      dose: {
+        minimum: min,
+        maximum: customDoseMax
+          ? Number(customDoseMax)
+          : min,
+        unit: customDoseUnit,
+      },
+
+    } as DoseReference;
+  }
+
+  return selectedDose;
+
+}, [
+  useCustomDose,
+  customDoseMin,
+  customDoseMax,
+  customDoseUnit,
+  selectedDose,
+  species,
+]);
 const calculatedDose = useMemo(() => {
-  if (!selectedDose) {
+  if (!currentDose) {
     return null;
   }
 
@@ -142,14 +203,14 @@ const calculatedDose = useMemo(() => {
 
   return {
     minimum:
-      selectedDose.dose.minimum *
+      currentDose.dose.minimum *
       bodyWeight,
 
     maximum:
-      selectedDose.dose.maximum *
+      currentDose.dose.maximum *
       bodyWeight,
   };
-}, [selectedDose, weight]);
+}, [currentDose, weight]);
 
 const selectedFormulation = useMemo(() => {
   return (
@@ -165,16 +226,16 @@ const administration = useMemo(() => {
     return null;
   }
 
-
   let concentration = 0;
   let dosageForm = "";
   let strength = "";
+
   let concentrationUnit =
-  selectedFormulation?.concentration.unit ??
-  ConcentrationUnit.MG_PER_ML;
-  
+    selectedFormulation?.concentration.unit ??
+    ConcentrationUnit.MG_PER_ML;
 
 
+  // Saved formulation
   if (
     !useCustomFormulation &&
     selectedFormulation
@@ -193,69 +254,87 @@ const administration = useMemo(() => {
         .includes("powder");
 
 
+    // Powder formulation
     if (isPowder) {
 
-  // User selected a vial size and entered
-  // final reconstitution volume
-  
-  if (
-  selectedVialStrength &&
-  reconstitutionVolume
-) {
+      if (
+        selectedVialStrength &&
+        reconstitutionVolume
+      ) {
 
-  concentration =
-    Number(selectedVialStrength) /
-    Number(reconstitutionVolume);
+        concentration =
+          Number(selectedVialStrength) /
+          Number(reconstitutionVolume);
 
- concentrationUnit =
-  selectedFormulation.reconstitutionUnit ??
-  ConcentrationUnit.MG_PER_ML;
+        concentrationUnit =
+          selectedFormulation.reconstitutionUnit ??
+          ConcentrationUnit.MG_PER_ML;
 
-}
-// Use standard concentration
-else if (
-  useStandardConcentration &&
-  selectedFormulation.standardConcentration
-) {
+      }
 
-  concentration =
-    selectedFormulation.standardConcentration;
+      else if (
+        useStandardConcentration &&
+        selectedFormulation.standardConcentration
+      ) {
 
-  concentrationUnit =
-  selectedFormulation.reconstitutionUnit ??
-  ConcentrationUnit.MG_PER_ML;
+        concentration =
+          selectedFormulation.standardConcentration;
 
-}
+        concentrationUnit =
+          selectedFormulation.reconstitutionUnit ??
+          ConcentrationUnit.MG_PER_ML;
 
-  // User entered custom concentration
-else if (customStrength) {
+      }
 
-  concentration =
-    Number(customStrength);
+      else if (customStrength) {
 
-  concentrationUnit =
-  selectedFormulation.reconstitutionUnit ??
-  ConcentrationUnit.MG_PER_ML;
+        concentration =
+          Number(customStrength);
 
-}
+        concentrationUnit =
+          selectedFormulation.reconstitutionUnit ??
+          ConcentrationUnit.MG_PER_ML;
 
-  // Need more information
-  else {
+      }
 
-    return {
-      requiresReconstitution: true,
-      dosageForm,
-      strength,
-      minimum: 0,
-      maximum: 0,
-      concentration: 0,
-       concentrationUnit:
-    selectedFormulation.concentration.unit,
-    };
+      else {
 
-  }
+        return {
+          requiresReconstitution: true,
+          dosageForm,
+          strength,
+          minimum: 0,
+          maximum: 0,
+          concentration: 0,
+          concentrationUnit:
+            selectedFormulation.reconstitutionUnit ??
+            ConcentrationUnit.MG_PER_ML,
+        };
 
-}
+      }
+
+    }
+
+
+    // Tablet formulation
+    else if (
+      selectedFormulation.dosageForm === DosageForm.TABLET
+    ) {
+
+      if (!selectedTabletStrength) {
+        return null;
+      }
+
+      concentration =
+        selectedTabletStrength;
+
+      concentrationUnit =
+        ConcentrationUnit.MG_PER_TABLET;
+
+    }
+
+
+    // Other formulations
     else if (
       selectedFormulation.concentration
     ) {
@@ -263,8 +342,12 @@ else if (customStrength) {
       concentration =
         selectedFormulation.concentration.value;
 
-    } 
-    
+      concentrationUnit =
+        selectedFormulation.concentration.unit;
+
+    }
+
+
     else {
 
       concentration =
@@ -278,6 +361,7 @@ else if (customStrength) {
   }
 
 
+  // Custom formulation
   if (
     useCustomFormulation &&
     customStrength
@@ -289,22 +373,37 @@ else if (customStrength) {
     dosageForm =
       "Custom";
 
-    strength = `${customStrength} ${selectedDose
-  ? getDoseDisplayUnit(selectedDose.dose.unit)
-  : "mg"}`;
-  if (selectedDose) {
-  switch (selectedDose.dose.unit) {
-    case DoseUnit.IU_PER_KG:
-      concentrationUnit =
-        ConcentrationUnit.IU_PER_ML;
-      break;
+    strength =
+      `${customStrength} ${
+        currentDose
+          ? getDoseDisplayUnit(currentDose.dose.unit)
+          : "mg"
+      }`;
 
-    default:
-      concentrationUnit =
-        ConcentrationUnit.MG_PER_ML;
-      break;
-  }
-}
+
+    if (currentDose) {
+
+      switch (currentDose.dose.unit) {
+
+        case DoseUnit.IU_PER_KG:
+
+          concentrationUnit =
+            ConcentrationUnit.IU_PER_ML;
+
+          break;
+
+
+        default:
+
+          concentrationUnit =
+            ConcentrationUnit.MG_PER_ML;
+
+          break;
+
+      }
+
+    }
+
   }
 
 
@@ -344,7 +443,9 @@ else if (customStrength) {
   customStrength,
   useStandardConcentration,
   selectedVialStrength,
+  selectedTabletStrength,
   reconstitutionVolume,
+  currentDose,
 ]);
   return (
     <section className="mt-10 rounded-xl border bg-white p-6 shadow-sm">
@@ -397,39 +498,131 @@ else if (customStrength) {
         <label className="mb-2 block text-sm font-medium">
           Dose Reference
         </label>
+        <div className="mt-3 flex gap-6">
 
-        <select
-          disabled={!species}
-          value={selectedDoseIndex}
-          onChange={(e) =>
-            setSelectedDoseIndex(
-              e.target.value
-            )
-          }
-          className="w-full rounded-lg border p-3"
+  <label className="flex items-center gap-2">
+    <input
+      type="radio"
+      checked={!useCustomDose}
+      onChange={() =>
+        setUseCustomDose(false)
+      }
+    />
+    Saved Dose
+  </label>
+
+  <label className="flex items-center gap-2">
+    <input
+      type="radio"
+      checked={useCustomDose}
+      onChange={() =>
+        setUseCustomDose(true)
+      }
+    />
+    Custom Dose
+  </label>
+
+</div>
+
+        {!useCustomDose && (
+  <select
+    disabled={!species}
+    value={selectedDoseIndex}
+    onChange={(e) =>
+      setSelectedDoseIndex(
+        e.target.value
+      )
+    }
+    className="w-full rounded-lg border p-3"
+  >
+    <option value="">
+      Select dose reference
+    </option>
+
+    {availableDoseReferences.map(
+      (dose, index) => (
+        <option
+          key={index}
+          value={index}
         >
-          <option value="">
-            Select dose reference
-          </option>
+          {dose.indication} •{" "}
+          {dose.route} •{" "}
+          {dose.dose.minimum}
+          {dose.dose.minimum !==
+            dose.dose.maximum &&
+            `-${dose.dose.maximum}`}
+          {" "}
+          {dose.dose.unit}
+        </option>
+      )
+    )}
+  </select>
+  
+)}
+{useCustomDose && (
+  <div className="mt-4">
 
-          {availableDoseReferences.map(
-            (dose, index) => (
-              <option
-                key={index}
-                value={index}
-              >
-                {dose.indication} •{" "}
-                {dose.route} •{" "}
-                {dose.dose.minimum}
-                {dose.dose.minimum !==
-                  dose.dose.maximum &&
-                  `-${dose.dose.maximum}`}
-                {" "}
-                {dose.dose.unit}
-              </option>
-            )
-          )}
-        </select>
+    <label className="mb-2 block text-sm font-medium">
+      Dose (minimum)
+    </label>
+
+    <input
+      type="number"
+      min="0"
+      step="0.1"
+      value={customDoseMin}
+      onChange={(e) =>
+        setCustomDoseMin(e.target.value)
+      }
+      placeholder="Example: 20"
+      className="w-full rounded-lg border p-3"
+    />
+<label className="mt-4 mb-2 block text-sm font-medium">
+  Dose (maximum) - Optional
+</label>
+
+<input
+  type="number"
+  min="0"
+  step="0.1"
+  value={customDoseMax}
+  onChange={(e) =>
+    setCustomDoseMax(e.target.value)
+  }
+  placeholder="Leave blank for single dose"
+  className="w-full rounded-lg border p-3"
+/>
+<label className="mt-4 mb-2 block text-sm font-medium">
+  Dose Unit
+</label>
+
+<select
+  value={customDoseUnit}
+  onChange={(e) =>
+    setCustomDoseUnit(
+      e.target.value as DoseUnit
+    )
+  }
+  className="w-full rounded-lg border p-3"
+>
+  <option value={DoseUnit.MG_PER_KG}>
+    mg/kg
+  </option>
+
+  <option value={DoseUnit.MCG_PER_KG}>
+    mcg/kg
+  </option>
+
+  <option value={DoseUnit.IU_PER_KG}>
+    IU/kg
+  </option>
+
+  <option value={DoseUnit.MEQ_PER_KG}>
+    mEq/kg
+  </option>
+</select>
+  </div>
+)}
 
       </div>
 
@@ -488,6 +681,7 @@ else if (customStrength) {
 
       Custom Formulation
     </label>
+    
 
   </div>
 
@@ -518,6 +712,42 @@ else if (customStrength) {
       )}
 
     </select>
+
+   {selectedFormulation?.dosageForm === DosageForm.TABLET &&
+ selectedFormulation.tabletStrengths && (
+  <div className="mt-4">
+
+    <label className="mb-2 block text-sm font-medium">
+      Tablet Strength
+    </label>
+
+    <select
+      value={selectedTabletStrength}
+      onChange={(e) =>
+        setSelectedTabletStrength(
+          Number(e.target.value)
+        )
+      }
+      className="w-full rounded-lg border p-3"
+    >
+      <option value="">
+        Select tablet strength
+      </option>
+
+      {selectedFormulation.tabletStrengths.map(
+        (strength) => (
+          <option
+            key={strength}
+            value={strength}
+          >
+            {strength} mg
+          </option>
+        )
+      )}
+    </select>
+
+  </div>
+)}
 {selectedFormulation?.vialStrengths && (
   <div className="mt-4">
 
@@ -617,16 +847,18 @@ else if (customStrength) {
           e.target.value
         )
       }
-     placeholder={`Enter concentration or tablet strength (${selectedDose
-  ? getDoseDisplayUnit(selectedDose.dose.unit)
-  : "mg"})`}
+     placeholder={`Enter concentration or tablet strength (${
+  currentDose
+    ? getDoseDisplayUnit(currentDose.dose.unit)
+    : "mg"
+})`}
     />
 
   )}
 
 </div>
 
-      {selectedDose && (
+      {currentDose && (
         <div className="mt-6 rounded-lg bg-gray-50 p-4">
 
           <h3 className="mb-3 font-semibold">
@@ -635,28 +867,28 @@ else if (customStrength) {
 
           <p>
             <strong>Indication:</strong>{" "}
-            {selectedDose.indication}
+            {currentDose.indication}
           </p>
 
           <p>
             <strong>Route:</strong>{" "}
-            {selectedDose.route}
+            {currentDose.route}
           </p>
 
           <p>
             <strong>Dose:</strong>{" "}
-            {selectedDose.dose.minimum}
-            {selectedDose.dose.minimum !==
-              selectedDose.dose.maximum &&
-              ` - ${selectedDose.dose.maximum}`}
+            {currentDose.dose.minimum}
+            {currentDose.dose.minimum !==
+              currentDose.dose.maximum &&
+              ` - ${currentDose.dose.maximum}`}
             {" "}
-            {selectedDose.dose.unit}
+            {currentDose.dose.unit}
           </p>
 
-          {selectedDose.frequency && (
+          {currentDose.frequency && (
             <p>
               <strong>Frequency:</strong>{" "}
-              {selectedDose.frequency}
+              {currentDose.frequency}
             </p>
           )}
 
@@ -669,24 +901,23 @@ else if (customStrength) {
       Drug Required
     </p>
 
-   {selectedDose.dose.minimum ===
-selectedDose.dose.maximum ? (
+  {currentDose.dose.minimum ===
+currentDose.dose.maximum ? (
 
   <p className="mt-2 text-2xl font-bold text-green-600">
     {calculatedDose.minimum.toFixed(2)}
     {" "}
-    {getDoseDisplayUnit(selectedDose.dose.unit)}
+    {getDoseDisplayUnit(currentDose.dose.unit)}
   </p>
-
 ) : (
 
   <p className="mt-2 text-2xl font-bold text-green-600">
-    {calculatedDose.minimum.toFixed(2)}
-    {" - "}
-    {calculatedDose.maximum.toFixed(2)}
-    {" "}
-    {getDoseDisplayUnit(selectedDose.dose.unit)}
-  </p>
+  {calculatedDose.minimum.toFixed(2)}
+  {" - "}
+  {calculatedDose.maximum.toFixed(2)}
+  {" "}
+  {getDoseDisplayUnit(currentDose.dose.unit)}
+</p>
 
 )}
 {administration && (

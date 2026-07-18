@@ -184,6 +184,9 @@ export interface DrugFormulation {
   routes: Route[];
   // For powder injections with multiple vial sizes
   vialStrengths?: number[];
+
+  tabletStrengths?: number[];
+  
   // For known reconstituted concentrations
   standardConcentration?: number;
   // Unit after reconstitution

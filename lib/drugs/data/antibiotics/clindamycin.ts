@@ -122,7 +122,12 @@ const clindamycin: Drug = {
         value: 0,
         unit: ConcentrationUnit.OTHER,
       },
-
+tabletStrengths: [
+    25,
+    75,
+    150,
+    300,
+  ],
       routes: [
         Route.PO,
       ],
@@ -139,29 +144,49 @@ const clindamycin: Drug = {
         value: 0,
         unit: ConcentrationUnit.OTHER,
       },
-
+tabletStrengths: [
+    25,
+    75,
+    150,
+    300,
+  ],
       routes: [
         Route.PO,
       ],
     },
 
     {
-      id: "oral-solution",
+    id: "oral_solution_25",
+    dosageForm: DosageForm.ORAL_SOLUTION,
 
-      dosageForm: DosageForm.ORAL_SOLUTION,
+    strength: "25 mg/mL",
 
-      strength: "25 mg/mL; 75 mg/5 mL",
-
-      concentration: {
-        value: 25,
-        unit: ConcentrationUnit.MG_PER_ML,
-      },
-
-      routes: [
-        Route.PO,
-      ],
+    concentration: {
+      value: 25,
+      unit: ConcentrationUnit.MG_PER_ML,
     },
 
+    routes: [
+      Route.PO
+    ]
+  },
+
+  {
+    id: "oral_solution_75_5ml",
+    dosageForm: DosageForm.ORAL_SOLUTION,
+
+    strength: "75 mg/5 mL",
+
+    concentration: {
+      value: 15,
+      unit: ConcentrationUnit.MG_PER_ML,
+    },
+
+    routes: [
+      Route.PO
+    ]
+  },
+  
     {
       id: "injectable-solution",
 
