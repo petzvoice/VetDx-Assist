@@ -6,12 +6,74 @@ import {
   Drug,
   DoseReference,
   Species,
+  DoseUnit,
+  ConcentrationUnit,
 } from "@/lib/drugs/types";
+
 
 interface DoseCalculatorProps {
   drug: Drug;
 }
 
+function getDoseDisplayUnit(unit: DoseUnit) {
+  switch (unit) {
+    case DoseUnit.MG_PER_KG:
+    case DoseUnit.MG_PER_M2:
+    case DoseUnit.MG:
+    case DoseUnit.MG_PER_KG_HR:
+    case DoseUnit.MG_PER_KG_PER_MIN:
+      return "mg";
+
+    case DoseUnit.MCG_PER_KG:
+    case DoseUnit.MCG_PER_KG_MIN:
+      return "mcg";
+
+    case DoseUnit.IU_PER_KG:
+      return "IU";
+
+    case DoseUnit.MEQ_PER_KG:
+      return "mEq";
+
+    default:
+      return "";
+  }
+  }
+function getConcentrationDisplayUnit(
+  unit: ConcentrationUnit
+) {
+  switch (unit) {
+
+    case ConcentrationUnit.MG_PER_ML:
+      return "mg/mL";
+
+    case ConcentrationUnit.IU_PER_ML:
+      return "IU/mL";
+
+    case ConcentrationUnit.MG_PER_G:
+      return "mg/g";
+
+    case ConcentrationUnit.MG_PER_LITER:
+      return "mg/L";
+
+    case ConcentrationUnit.MG_PER_TABLET:
+      return "mg/tablet";
+
+    case ConcentrationUnit.MG_PER_CAPSULE:
+      return "mg/capsule";
+
+    case ConcentrationUnit.MG_PER_BOLUS:
+      return "mg/bolus";
+
+    case ConcentrationUnit.MG:
+      return "mg";
+
+    case ConcentrationUnit.PERCENT:
+      return "%";
+
+    default:
+      return "";
+  }
+}
 export default function DoseCalculator({
   drug,
 }: DoseCalculatorProps) {
@@ -107,7 +169,10 @@ const administration = useMemo(() => {
   let concentration = 0;
   let dosageForm = "";
   let strength = "";
-  let reconstitutedConcentration = 0;
+  let concentrationUnit =
+  selectedFormulation?.concentration.unit ??
+  ConcentrationUnit.MG_PER_ML;
+  
 
 
   if (
@@ -134,34 +199,45 @@ const administration = useMemo(() => {
   // final reconstitution volume
   
   if (
-    selectedVialStrength &&
-    reconstitutionVolume
-  ) {
+  selectedVialStrength &&
+  reconstitutionVolume
+) {
 
-    concentration =
-      Number(selectedVialStrength) /
-      Number(reconstitutionVolume);
+  concentration =
+    Number(selectedVialStrength) /
+    Number(reconstitutionVolume);
 
-  }
+ concentrationUnit =
+  selectedFormulation.reconstitutionUnit ??
+  ConcentrationUnit.MG_PER_ML;
 
-  // Use standard concentration
-  else if (
-    useStandardConcentration &&
-    selectedFormulation.standardConcentration
-  ) {
+}
+// Use standard concentration
+else if (
+  useStandardConcentration &&
+  selectedFormulation.standardConcentration
+) {
 
-    concentration =
-      selectedFormulation.standardConcentration;
+  concentration =
+    selectedFormulation.standardConcentration;
 
-  }
+  concentrationUnit =
+  selectedFormulation.reconstitutionUnit ??
+  ConcentrationUnit.MG_PER_ML;
+
+}
 
   // User entered custom concentration
-  else if (customStrength) {
+else if (customStrength) {
 
-    concentration =
-      Number(customStrength);
+  concentration =
+    Number(customStrength);
 
-  }
+  concentrationUnit =
+  selectedFormulation.reconstitutionUnit ??
+  ConcentrationUnit.MG_PER_ML;
+
+}
 
   // Need more information
   else {
@@ -173,6 +249,8 @@ const administration = useMemo(() => {
       minimum: 0,
       maximum: 0,
       concentration: 0,
+       concentrationUnit:
+    selectedFormulation.concentration.unit,
     };
 
   }
@@ -211,9 +289,22 @@ const administration = useMemo(() => {
     dosageForm =
       "Custom";
 
-    strength =
-      `${customStrength} mg`;
+    strength = `${customStrength} ${selectedDose
+  ? getDoseDisplayUnit(selectedDose.dose.unit)
+  : "mg"}`;
+  if (selectedDose) {
+  switch (selectedDose.dose.unit) {
+    case DoseUnit.IU_PER_KG:
+      concentrationUnit =
+        ConcentrationUnit.IU_PER_ML;
+      break;
 
+    default:
+      concentrationUnit =
+        ConcentrationUnit.MG_PER_ML;
+      break;
+  }
+}
   }
 
 
@@ -240,6 +331,7 @@ const administration = useMemo(() => {
     dosageForm,
     strength,
     concentration,
+    concentrationUnit,
     requiresReconstitution: false,
 
   };
@@ -448,17 +540,43 @@ const administration = useMemo(() => {
       </option>
 
       {selectedFormulation.vialStrengths.map(
-        (size) => (
-          <option
-            key={size}
-            value={size}
-          >
-            {size >= 1000
-              ? `${size / 1000} g vial`
-              : `${size} mg vial`}
-          </option>
-        )
-      )}
+  (size) => {
+
+    const isIU =
+      selectedFormulation.reconstitutionUnit ===
+      ConcentrationUnit.IU_PER_ML;
+
+    let label = "";
+
+    if (isIU) {
+
+      if (size >= 1000000) {
+        label = `${size / 1000000} million IU vial`;
+      } else {
+        label = `${size} IU vial`;
+      }
+
+    } else {
+
+      if (size >= 1000) {
+        label = `${size / 1000} g vial`;
+      } else {
+        label = `${size} mg vial`;
+      }
+
+    }
+
+    return (
+      <option
+        key={size}
+        value={size}
+      >
+        {label}
+      </option>
+    );
+
+  }
+)}
 
     </select>
 
@@ -499,8 +617,9 @@ const administration = useMemo(() => {
           e.target.value
         )
       }
-      placeholder="Enter concentration or tablet strength (mg)"
-      className="w-full rounded-lg border p-3"
+     placeholder={`Enter concentration or tablet strength (${selectedDose
+  ? getDoseDisplayUnit(selectedDose.dose.unit)
+  : "mg"})`}
     />
 
   )}
@@ -550,24 +669,26 @@ const administration = useMemo(() => {
       Drug Required
     </p>
 
-    {selectedDose.dose.minimum ===
-    selectedDose.dose.maximum ? (
+   {selectedDose.dose.minimum ===
+selectedDose.dose.maximum ? (
 
-      <p className="mt-2 text-2xl font-bold text-green-600">
-        {calculatedDose.minimum.toFixed(2)} mg
-      </p>
+  <p className="mt-2 text-2xl font-bold text-green-600">
+    {calculatedDose.minimum.toFixed(2)}
+    {" "}
+    {getDoseDisplayUnit(selectedDose.dose.unit)}
+  </p>
 
-    ) : (
+) : (
 
-      <p className="mt-2 text-2xl font-bold text-green-600">
-        {calculatedDose.minimum.toFixed(2)}
-        {" - "}
-        {calculatedDose.maximum.toFixed(2)}
-        {" "}
-        mg
-      </p>
+  <p className="mt-2 text-2xl font-bold text-green-600">
+    {calculatedDose.minimum.toFixed(2)}
+    {" - "}
+    {calculatedDose.maximum.toFixed(2)}
+    {" "}
+    {getDoseDisplayUnit(selectedDose.dose.unit)}
+  </p>
 
-    )}
+)}
 {administration && (
   <>
 {selectedFormulation?.vialStrengths && (
@@ -591,18 +712,42 @@ const administration = useMemo(() => {
         Select vial size
       </option>
 
-      {selectedFormulation.vialStrengths.map(
-        (size) => (
-          <option
-            key={size}
-            value={size}
-          >
-            {size >= 1000
-              ? `${size / 1000} g vial`
-              : `${size} mg vial`}
-          </option>
-        )
-      )}
+      {selectedFormulation.vialStrengths.map((size) => {
+
+  const isIU =
+    selectedFormulation.reconstitutionUnit ===
+    ConcentrationUnit.IU_PER_ML;
+
+  let label = "";
+
+  if (isIU) {
+
+    if (size >= 1000000) {
+      label = `${size / 1000000} million IU vial`;
+    } else {
+      label = `${size} IU vial`;
+    }
+
+  } else {
+
+    if (size >= 1000) {
+      label = `${size / 1000} g vial`;
+    } else {
+      label = `${size} mg vial`;
+    }
+
+  }
+
+  return (
+    <option
+      key={size}
+      value={size}
+    >
+      {label}
+    </option>
+  );
+
+})}
 
     </select>
 
@@ -628,8 +773,12 @@ const administration = useMemo(() => {
       />
 
       Use standard concentration (
-      {selectedFormulation.standardConcentration}
-      mg/mL)
+{selectedFormulation.standardConcentration}
+{" "}
+{getConcentrationDisplayUnit(
+  selectedFormulation.reconstitutionUnit ??
+  selectedFormulation.concentration.unit
+)})
 
     </label>
 
@@ -637,10 +786,15 @@ const administration = useMemo(() => {
     {!useStandardConcentration && (
       <>
 
-        <p className="mt-3">
-          Enter final concentration after dilution
-          (mg/mL)
-        </p>
+       <p className="mt-3">
+  Enter final concentration after dilution
+  (
+  {getConcentrationDisplayUnit(
+    selectedFormulation.reconstitutionUnit ??
+    selectedFormulation.concentration.unit
+  )}
+  )
+</p>
 
         <input
           type="number"
@@ -652,8 +806,10 @@ const administration = useMemo(() => {
               e.target.value
             )
           }
-          placeholder="Example: 4 mg/mL"
-          className="mt-3 w-full rounded-lg border p-3"
+         placeholder={`Example: 4 ${getConcentrationDisplayUnit(
+  selectedFormulation.reconstitutionUnit ??
+  selectedFormulation.concentration.unit
+)}`}
         />
 
       </>
@@ -679,8 +835,10 @@ const administration = useMemo(() => {
 {administration.concentration > 0 && (
   <p className="mt-2">
     <strong>Concentration:</strong>{" "}
-    {administration.concentration}
-    {" mg/mL"}
+    {administration.concentration}{" "}
+    {getConcentrationDisplayUnit(
+      administration.concentrationUnit
+    )}
   </p>
 )}
     <p className="mt-2 text-2xl font-bold text-blue-600">

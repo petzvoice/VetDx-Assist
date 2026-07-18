@@ -186,6 +186,8 @@ export interface DrugFormulation {
   vialStrengths?: number[];
   // For known reconstituted concentrations
   standardConcentration?: number;
+  // Unit after reconstitution
+  reconstitutionUnit?: ConcentrationUnit;
 
 
   notes?: string;

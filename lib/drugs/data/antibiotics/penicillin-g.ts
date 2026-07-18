@@ -125,6 +125,15 @@ const penicillinG: Drug = {
       routes: [
         Route.IV,
       ],
+
+      vialStrengths: [
+    1000000,
+    5000000,
+    10000000,
+    20000000,
+  ],
+  reconstitutionUnit:
+  ConcentrationUnit.IU_PER_ML,
     },
 
 
