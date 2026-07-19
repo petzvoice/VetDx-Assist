@@ -1,13 +1,17 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import type { AIClinicalReport } from "@/types/ai";
+import { buildKnowledgeContext } from "@/lib/knowledge-engine/context";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
 
 const MODEL = "gemini-2.5-flash";
-function buildPrompt(caseData: any) {
+function buildPrompt(
+  caseData: any,
+  knowledgeContext: string
+) {
   return `
 You are VetDx Assist.
 
@@ -60,6 +64,11 @@ Return JSON with these fields:
   "prognosis": {},
   "clientSummary": ""
 }
+
+VetDx Knowledge Reference:
+
+${knowledgeContext}
+
 
 Clinical Case:
 
@@ -123,8 +132,17 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const prompt = buildPrompt(body);
+const knowledgeContext =
+  buildKnowledgeContext(
+    JSON.stringify(body)
+  );
 
+
+const prompt =
+  buildPrompt(
+    body,
+    knowledgeContext
+  );
     let report: AIClinicalReport | null =
       null;
 
@@ -338,7 +356,10 @@ report.prognosis = {
               Number(diag.confidence) ||
               50,
 
-            reasoning: [],
+            reasoning:
+  Array.isArray(diag.reasoning)
+    ? diag.reasoning
+    : [],
 
             supportingFindings:
               Array.isArray(
@@ -373,8 +394,10 @@ report.prognosis = {
               Number(item.confidence) ||
               50,
 
-            reasoning: [],
-
+            reasoning:
+  Array.isArray(item.reasoning)
+    ? item.reasoning
+    : [],
             supportingFindings:
               Array.isArray(
                 item.supportingFindings
