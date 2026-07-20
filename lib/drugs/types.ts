@@ -329,6 +329,7 @@ export interface Drug {
   brandNames: string[];
   status: DrugStatus;
   searchTerms: string[];
+  treatmentCategories?: string[];
 
   /* --------------------------------------------------------
      Quick Facts
