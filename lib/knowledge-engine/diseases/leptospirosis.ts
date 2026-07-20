@@ -166,6 +166,37 @@ export const leptospirosis: DiseaseCard = {
 
   ],
 
+  clinicalEvidence: {
+  history: [
+    { finding: "Stagnant water", weight: 40 },
+    { finding: "Rodent exposure", weight: 35 },
+  ],
+
+  clinicalSigns: [
+    { finding: "Fever", weight: 25 },
+    { finding: "Vomiting", weight: 15 },
+    { finding: "Lethargy", weight: 15 },
+    { finding: "Jaundice", weight: 30 },
+  ],
+
+  biochemistry: [
+    { finding: "Increased Creatinine", weight: 35 },
+    { finding: "Increased Bilirubin", weight: 30 },
+  ],
+
+  urinalysis: [
+    { finding: "Proteinuria", weight: 20 },
+    { finding: "Isosthenuria", weight: 20 },
+  ],
+
+  supports: [
+    { finding: "Acute kidney injury", weight: 40 },
+  ],
+
+  against: [
+    { finding: "Hyperglycemia", weight: -20 },
+  ],
+},
 
   monitoring: [
 

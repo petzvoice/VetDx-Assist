@@ -1,6 +1,5 @@
 import { DiseaseCard } from "./types";
-import { leptospirosis } from "@/data/diseases";
-
+import { leptospirosis } from "@/lib/knowledge-engine/diseases";
 export const diseaseDatabase: DiseaseCard[] = [
   leptospirosis,
 ];

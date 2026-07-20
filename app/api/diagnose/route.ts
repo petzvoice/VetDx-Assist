@@ -2,6 +2,11 @@ import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import type { AIClinicalReport } from "@/types/ai";
 import { buildKnowledgeContext } from "@/lib/knowledge-engine/context";
+import { searchDisease } from "@/lib/knowledge-engine/search";
+import { buildDrugContext } from "@/lib/drugs/data/context";
+import { rankDiseases } from "@/lib/knowledge-engine/rankDiseases";
+import { findDrugsByTreatment } from "@/lib/drugs/data/findDrugsByTreatment";
+
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
@@ -10,7 +15,9 @@ const ai = new GoogleGenAI({
 const MODEL = "gemini-2.5-flash";
 function buildPrompt(
   caseData: any,
-  knowledgeContext: string
+  knowledgeContext: string,
+  drugContext: string,
+  diseaseContext: string
 ) {
   return `
 You are VetDx Assist.
@@ -42,6 +49,9 @@ Rules:
 - Include findings against each diagnosis.
 - Include recommended diagnostics.
 - Include conservative stabilization and treatment recommendations.
+- For each treatment recommendation, assign a treatment category.
+- Do not select specific drug names unless necessary.
+- Treatment categories should match veterinary therapeutic categories.
 - Prognosis MUST ALWAYS include:
   - shortTerm
   - longTerm
@@ -57,7 +67,13 @@ Return JSON with these fields:
   "differentials": [],
   "recommendedDiagnostics": [],
   "stabilization": [],
-  "treatmentConsiderations": [],
+  "treatmentConsiderations": [
+  {
+    "recommendation": "",
+    "category": "",
+    "details": ""
+  }
+],
   "monitoring": [],
   "redFlags": [],
   "clinicalPearls": [],
@@ -65,10 +81,17 @@ Return JSON with these fields:
   "clientSummary": ""
 }
 
-VetDx Knowledge Reference:
+VetDx Disease Knowledge:
 
 ${knowledgeContext}
 
+VetDx Ranked Disease Candidates:
+
+${diseaseContext}
+
+VetDx Drug Knowledge:
+
+${drugContext}
 
 Clinical Case:
 
@@ -132,17 +155,66 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-const knowledgeContext =
-  buildKnowledgeContext(
-    JSON.stringify(body)
-  );
+    const diseases = searchDisease(
+      JSON.stringify(body)
+    );
+
+    const knowledgeContext =
+      buildKnowledgeContext(
+        JSON.stringify(body)
+      );
+
+    const drugCategories =
+      diseases.flatMap((d) =>
+        d.drugCategories.map(
+          (c) => c.category
+        )
+      );
+
+    const drugContext =
+      buildDrugContext(
+        [...new Set(drugCategories)]
+      );
+
+    const rankedDiseases =
+      rankDiseases(
+        JSON.stringify(body)
+      )
+      .slice(0, 10);
 
 
-const prompt =
+    const diseaseContext =
+  rankedDiseases
+    .map(
+      (item, index) => {
+
+       const evidence =
+  item.matchedEvidence
+    .map(
+      (e) =>
+        `${e.finding} (${e.weight >= 0 ? "+" : ""}${e.weight})`
+    )
+    .join(", ");
+
+        return `
+${index + 1}. ${item.disease.title}
+Score: ${item.score}
+Matched Evidence: ${evidence}
+`;
+      }
+    )
+    .join("\n");
+
+
+
+   const prompt =
   buildPrompt(
     body,
-    knowledgeContext
+    knowledgeContext,
+    drugContext,
+    diseaseContext
   );
+
     let report: AIClinicalReport | null =
       null;
 
@@ -207,9 +279,9 @@ const prompt =
         lastError = err.message;
 
         console.error(
-          `Gemini attempt ${attempt} failed:`,
-          err
-        );
+  `[Gemini Failure Attempt ${attempt}]`,
+  err?.message
+);
 
         if (attempt < 3) {
           await new Promise((resolve) =>
@@ -260,11 +332,31 @@ const prompt =
         : [];
 
     report.treatmentConsiderations =
-      Array.isArray(
-        report.treatmentConsiderations
-      )
-        ? report.treatmentConsiderations
-        : [];
+report.treatmentConsiderations.map(
+(item:any)=>{
+
+ if(
+   typeof item === "string"
+ ){
+   return item;
+ }
+
+
+ return {
+   ...item,
+
+   linkedDrugs:
+    item.category
+    ?
+    findDrugsByTreatment(
+      item.category
+    )
+    :
+    []
+
+ };
+
+});
 
     report.monitoring = Array.isArray(
       report.monitoring
@@ -356,10 +448,14 @@ report.prognosis = {
               Number(diag.confidence) ||
               50,
 
-            reasoning:
-  Array.isArray(diag.reasoning)
-    ? diag.reasoning
-    : [],
+           reasoning:
+Array.isArray(diag.reasoning)
+  ? diag.reasoning
+  : diag.reasoning
+    ? [diag.reasoning]
+    : diag.explanation
+      ? [diag.explanation]
+      : [],
 
             supportingFindings:
               Array.isArray(
@@ -423,21 +519,53 @@ report.prognosis = {
     })
   : [];
 
+report.differentials =
+  report.differentials.map((diag:any)=>{
 
+    const diagnosisName =
+  diag.name.toLowerCase();
+
+const matchedDisease =
+  rankedDiseases.find((d) => {
+
+    const diseaseName =
+      d.disease.title.toLowerCase();
+
+    return (
+      diagnosisName.includes(diseaseName) ||
+      diseaseName.includes(diagnosisName)
+    );
+  });
+    return {
+      ...diag,
+
+      vetDxEvidence:
+        matchedDisease?.matchedEvidence
+          ?.map(
+            (e:any)=>e.finding
+          )
+          ?? []
+    };
+
+  });
+
+  
     return NextResponse.json({
       success: true,
       data: report,
     });
   } catch (error: any) {
     console.error(
-      "========== API ERROR =========="
-    );
+  "========== API ERROR =========="
+);
 
-    console.error(error);
+console.error(
+  error?.message ?? "Unknown server error"
+);
 
-    console.error(
-      "==============================="
-    );
+console.error(
+  "==============================="
+);
 
     return NextResponse.json(
       {

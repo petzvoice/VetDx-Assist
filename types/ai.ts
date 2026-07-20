@@ -38,6 +38,8 @@ export interface DifferentialDiagnosis {
         recommendation: string;
         details?: string;
       }[];
+
+      vetDxEvidence?: string[];
 }
 
 export interface DiagnosticRecommendation {
@@ -52,7 +54,14 @@ export interface StabilizationRecommendation {
 
 export interface TreatmentRecommendation {
   recommendation: string;
+  category?: string;
   details?: string;
+
+  linkedDrugs?: {
+    drugId?: string;
+    name: string;
+    category?: string;
+  }[];
 }
 
 export interface MonitoringRecommendation {

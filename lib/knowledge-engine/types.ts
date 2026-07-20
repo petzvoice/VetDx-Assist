@@ -52,6 +52,8 @@ export interface DiseaseCard extends KnowledgeCard {
 
   drugCategories: DrugCategoryRecommendation[];
 
+  clinicalEvidence?: ClinicalEvidence;
+
   monitoring: MonitoringStep[];
 
   precautions: Precaution[];
@@ -92,5 +94,37 @@ export interface ClinicalProblemCard
   monitoring: MonitoringStep[];
 
   drugCategories: DrugCategoryRecommendation[];
+
+  clinicalEvidence?: ClinicalEvidence;
 }
 
+export interface EvidenceItem {
+  finding: string;
+  weight: number;
+}
+
+export interface ClinicalEvidence {
+  signalment?: EvidenceItem[];
+
+  history?: EvidenceItem[];
+
+  clinicalSigns?: EvidenceItem[];
+
+  physicalExam?: EvidenceItem[];
+
+  cbc?: EvidenceItem[];
+
+  biochemistry?: EvidenceItem[];
+
+  urinalysis?: EvidenceItem[];
+
+  imaging?: EvidenceItem[];
+
+  toxicology?: EvidenceItem[];
+
+  infectiousDisease?: EvidenceItem[];
+
+  supports?: EvidenceItem[];
+
+  against?: EvidenceItem[];
+}
