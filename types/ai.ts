@@ -90,6 +90,7 @@ export interface Prognosis {
 }
 
 export interface AIClinicalReport {
+  source?: "ai" | "fallback";
   patientSummary: PatientSummary;
 
   triage: TriageAssessment;

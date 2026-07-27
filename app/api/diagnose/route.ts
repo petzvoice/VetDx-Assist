@@ -4,6 +4,7 @@ import type { AIClinicalReport } from "@/types/ai";
 import { buildKnowledgeContext } from "@/lib/knowledge-engine/context";
 import { rankDiseases } from "@/lib/knowledge-engine/rankDiseases";
 import { drugs } from "@/lib/drugs/data";
+import { generateFallbackReport } from "@/lib/knowledge-engine/generateFallbackReport";
 
 
 const ai = new GoogleGenAI({
@@ -173,6 +174,9 @@ export async function POST(req: Request) {
     const body = await req.json();
 
    
+
+
+   
     const knowledgeContext =
       buildKnowledgeContext(
         JSON.stringify(body)
@@ -227,6 +231,7 @@ Matched Evidence: ${evidence}
       attempt++
     ) {
       try {
+        
         const response =
           await ai.models.generateContent({
             model: MODEL,
@@ -274,6 +279,7 @@ Matched Evidence: ${evidence}
 
         report =
           normalizeConfidence(parsed);
+          report.source = "ai";
 
         break;
       } catch (err: any) {
@@ -292,19 +298,16 @@ Matched Evidence: ${evidence}
       }
     }
 
-    if (!report) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "AI failed to generate a valid clinical report.",
-          error: lastError,
-        },
-        {
-          status: 500,
-        }
-      );
-    }
+   if (!report) {
+  console.warn(
+    "Primary AI unavailable. Using VetDx fallback report."
+  );
+
+  report = generateFallbackReport(
+    body,
+    rankedDiseases
+  );
+}
 
     report.problemList = Array.isArray(
       report.problemList
@@ -540,16 +543,11 @@ report.treatmentConsiderations = Array.isArray(
         };
       }
 
-      const primaryDisease = rankedDiseases.find((d) => {
-  const diseaseName = d.disease.title.toLowerCase();
-  const diagnosisName =
-    report.differentials[0]?.name.toLowerCase() ?? "";
-
-  return (
-    diagnosisName.includes(diseaseName) ||
-    diseaseName.includes(diagnosisName)
-  );
-});
+     const primaryDisease = rankedDiseases.find(
+  (d) =>
+    d.disease.id ===
+    report.differentials[0]?.diseaseId
+);
 
 const linkedDrugs =
   (primaryDisease?.disease.recommendedDrugs ?? [])

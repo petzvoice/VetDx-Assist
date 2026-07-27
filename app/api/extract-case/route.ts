@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
+import { generateFallbackExtraction } from "@/lib/knowledge-engine/generateFallbackExtraction";
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
@@ -219,10 +220,14 @@ function validateExtractedCase(data: any) {
 
 export async function POST(req: Request) {
 
+  let notes = "";
+
   try {
 
-    const { notes } =
-      await req.json();
+    ({ notes } = await req.json());
+
+    const fallbackTest = generateFallbackExtraction(notes);
+
 
 
 
@@ -318,18 +323,76 @@ export async function POST(req: Request) {
 
 
     const cleanedCase =
-      removeEmptyFields(extracted);
+  removeEmptyFields(extracted) ?? {};
+
+
+const fallbackCase =
+  generateFallbackExtraction(notes ?? "");
+
+
+const finalCase = {
+
+  patient: {
+    ...(cleanedCase.patient ?? {}),
+    ...Object.fromEntries(
+      Object.entries(fallbackCase.patient)
+        .filter(
+          ([_, value]) => value !== ""
+        )
+    ),
+  },
+
+
+  history: {
+    ...(cleanedCase.history ?? {}),
+    ...Object.fromEntries(
+      Object.entries(fallbackCase.history)
+        .filter(
+          ([_, value]) => value !== ""
+        )
+    ),
+  },
+
+
+  clinicalSigns: {
+    ...fallbackCase.clinicalSigns,
+    ...(cleanedCase.clinicalSigns ?? {}),
+  },
+
+
+  physicalExam: {
+    ...(cleanedCase.physicalExam ?? {}),
+    ...Object.fromEntries(
+      Object.entries(fallbackCase.physicalExam)
+        .filter(
+          ([_, value]) => value !== ""
+        )
+    ),
+  },
+
+
+  diagnostics: {
+    ...(cleanedCase.diagnostics ?? {}),
+    ...Object.fromEntries(
+      Object.entries(fallbackCase.diagnostics)
+        .filter(
+          ([_, value]) => value !== ""
+        )
+    ),
+  },
+
+};
 
 
 
-    return NextResponse.json({
 
-      success: true,
+return NextResponse.json({
 
-      data: cleanedCase,
+  success: true,
 
-    });
+  data: finalCase,
 
+});
 
 
   } catch (error: any) {
@@ -347,22 +410,18 @@ export async function POST(req: Request) {
 
 
 
-    return NextResponse.json(
+    const fallbackCase = generateFallbackExtraction(
+  notes ?? ""
+);
 
-      {
-        success: false,
+console.warn(
+  "Primary extraction unavailable. Using VetDx extraction fallback."
+);
 
-        message:
-          error?.message ??
-          "Unable to extract clinical information.",
-      },
-
-      {
-        status: 500,
-      }
-
-    );
-
+return NextResponse.json({
+  success: true,
+  data: fallbackCase,
+});
   }
 
 }
