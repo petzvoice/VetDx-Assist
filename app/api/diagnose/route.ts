@@ -2,10 +2,8 @@ import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import type { AIClinicalReport } from "@/types/ai";
 import { buildKnowledgeContext } from "@/lib/knowledge-engine/context";
-import { searchDisease } from "@/lib/knowledge-engine/search";
-import { buildDrugContext } from "@/lib/drugs/data/context";
 import { rankDiseases } from "@/lib/knowledge-engine/rankDiseases";
-import { findDrugsByTreatment } from "@/lib/drugs/data/findDrugsByTreatment";
+import { drugs } from "@/lib/drugs/data";
 
 
 const ai = new GoogleGenAI({
@@ -16,7 +14,6 @@ const MODEL = "gemini-2.5-flash";
 function buildPrompt(
   caseData: any,
   knowledgeContext: string,
-  drugContext: string,
   diseaseContext: string
 ) {
   return `
@@ -49,9 +46,32 @@ Rules:
 - Include findings against each diagnosis.
 - Include recommended diagnostics.
 - Include conservative stabilization and treatment recommendations.
-- For each treatment recommendation, assign a treatment category.
-- Do not select specific drug names unless necessary.
-- Treatment categories should match veterinary therapeutic categories.
+- For every treatment recommendation, assign ONLY ONE treatment category.
+
+Treatment Category Rules
+
+For every item in "treatmentConsiderations", the "category" field MUST be EXACTLY one of the following values:
+
+- Antibiotic
+- Antiemetic
+- NSAID
+- Opioid
+- Corticosteroid
+- Fluid Therapy
+- Gastrointestinal
+- Cardiovascular
+- Antiparasitic
+- Emergency Drug
+- Hepatoprotectant
+- Nutritional Support
+
+Rules:
+- Use EXACT spelling.
+- Do NOT invent new categories.
+- Do NOT pluralize category names.
+- Do NOT use synonyms.
+- Do NOT add extra words.
+- The "category" value must match one item from the list exactly.
 - Prognosis MUST ALWAYS include:
   - shortTerm
   - longTerm
@@ -89,9 +109,6 @@ VetDx Ranked Disease Candidates:
 
 ${diseaseContext}
 
-VetDx Drug Knowledge:
-
-${drugContext}
 
 Clinical Case:
 
@@ -155,26 +172,12 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const diseases = searchDisease(
-      JSON.stringify(body)
-    );
-
+   
     const knowledgeContext =
       buildKnowledgeContext(
         JSON.stringify(body)
       );
 
-    const drugCategories =
-      diseases.flatMap((d) =>
-        d.drugCategories.map(
-          (c) => c.category
-        )
-      );
-
-    const drugContext =
-      buildDrugContext(
-        [...new Set(drugCategories)]
-      );
 
     const rankedDiseases =
       rankDiseases(
@@ -207,13 +210,11 @@ Matched Evidence: ${evidence}
 
 
 
-   const prompt =
-  buildPrompt(
-    body,
-    knowledgeContext,
-    drugContext,
-    diseaseContext
-  );
+   const prompt = buildPrompt(
+  body,
+  knowledgeContext,
+  diseaseContext
+);
 
     let report: AIClinicalReport | null =
       null;
@@ -331,32 +332,7 @@ Matched Evidence: ${evidence}
         ? report.stabilization
         : [];
 
-    report.treatmentConsiderations =
-report.treatmentConsiderations.map(
-(item:any)=>{
-
- if(
-   typeof item === "string"
- ){
-   return item;
- }
-
-
- return {
-   ...item,
-
-   linkedDrugs:
-    item.category
-    ?
-    findDrugsByTreatment(
-      item.category
-    )
-    :
-    []
-
- };
-
-});
+    
 
     report.monitoring = Array.isArray(
       report.monitoring
@@ -537,18 +513,77 @@ const matchedDisease =
     );
   });
     return {
-      ...diag,
+  ...diag,
 
-      vetDxEvidence:
-        matchedDisease?.matchedEvidence
-          ?.map(
-            (e:any)=>e.finding
-          )
-          ?? []
-    };
+  diseaseId: matchedDisease?.disease.id ?? null,
+
+  vetDxEvidence:
+    matchedDisease?.matchedEvidence
+      ?.map((e: any) => e.finding)
+      ?? []
+};
 
   });
 
+
+report.treatmentConsiderations = Array.isArray(
+  report.treatmentConsiderations
+)
+  ? report.treatmentConsiderations.map((item: any) => {
+
+      if (typeof item === "string") {
+        return {
+          recommendation: item,
+          category: "",
+          details: "",
+          linkedDrugs: [],
+        };
+      }
+
+      const primaryDisease = rankedDiseases.find((d) => {
+  const diseaseName = d.disease.title.toLowerCase();
+  const diagnosisName =
+    report.differentials[0]?.name.toLowerCase() ?? "";
+
+  return (
+    diagnosisName.includes(diseaseName) ||
+    diseaseName.includes(diagnosisName)
+  );
+});
+
+const linkedDrugs =
+  (primaryDisease?.disease.recommendedDrugs ?? [])
+    .filter(
+      (drug: any) => drug.category === item.category
+    )
+        .filter(
+  (drug: any, index: number, array: any[]) =>
+            array.findIndex(
+              (d) => d.drugId === drug.drugId
+            ) === index
+        )
+        .map((drug: any) => {
+
+          const drugData = drugs.find(
+            (d: any) => d.id === drug.drugId
+          );
+
+          return {
+            drugId: drug.drugId,
+            name: drugData?.genericName ?? drug.drugId,
+            category: drug.category,
+            priority: drug.priority,
+          };
+
+        });
+
+      return {
+        ...item,
+        linkedDrugs,
+      };
+
+    })
+  : [];
   
     return NextResponse.json({
       success: true,

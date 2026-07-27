@@ -127,44 +127,45 @@ export const leptospirosis: DiseaseCard = {
 
 
   drugCategories: [
+  {
+    category: "Antibiotic",
+    indication: "Acute infection",
+    reason: "Rapid reduction of leptospiremia."
+  },
+  {
+    category: "Fluid Therapy",
+    indication: "AKI",
+    reason: "Restore perfusion and correct dehydration."
+  },
+  {
+    category: "Antiemetic",
+    indication: "Vomiting",
+    reason: "Control nausea and improve appetite."
+  },
+  {
+    category: "Hepatoprotectant",
+    indication: "Liver injury",
+    reason: "Support hepatocellular recovery."
+  }
+],
 
-    {
-      category:
-        "Antimicrobials (Acute Phase)",
-      indication:
-        "Treatment of active infection",
-      reason:
-        "Used to reduce bacterial burden during acute leptospiremia."
-    },
-
-    {
-      category:
-        "Antimicrobials (Carrier State)",
-      indication:
-        "Reduction of urinary shedding",
-      reason:
-        "Used to eliminate renal carrier status."
-    },
-
-    {
-      category:
-        "Fluid Therapy",
-      indication:
-        "Management of dehydration and renal dysfunction",
-      reason:
-        "Supports renal perfusion and electrolyte balance."
-    },
-
-    {
-      category:
-        "Anti-emetics",
-      indication:
-        "Control vomiting and nausea",
-      reason:
-        "Improves patient comfort and supports nutrition."
-    }
-
-  ],
+ recommendedDrugs: [
+  {
+    drugId: "doxycycline",
+    priority: "First Line",
+    category: "Antibiotic",
+  },
+  {
+    drugId: "ampicillin",
+    priority: "Initial Therapy",
+    category: "Antibiotic",
+  },
+  {
+    drugId: "maropitant",
+    priority: "Adjunctive",
+    category: "Antiemetic",
+  },
+],
 
   clinicalEvidence: {
   history: [

@@ -1,12 +1,20 @@
 "use client";
 
 import Card from "../ui/Card";
+import Link from "next/link";
 
 type TreatmentItem =
   | string
   | {
       recommendation?: string;
       details?: string;
+      category?: string;
+
+      linkedDrugs?: {
+  drugId?: string;
+  name: string;
+  category?: string;
+}[];
     };
 
 type TreatmentConsiderationsCardProps = {
@@ -31,6 +39,10 @@ export default function TreatmentConsiderationsCard({
               typeof item === "string"
                 ? item
                 : item.recommendation ?? "Recommendation";
+                const linkedDrugs =
+  typeof item === "string"
+    ? []
+    : item.linkedDrugs ?? [];
 
             const details =
               typeof item === "string"
@@ -56,6 +68,56 @@ export default function TreatmentConsiderationsCard({
                       {details}
                     </p>
                   )}
+
+                  {linkedDrugs.length > 0 && (
+  <div className="mt-3">
+    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-400">
+      Suggested Drugs
+    </p>
+
+    <div className="flex flex-wrap gap-2">
+      {linkedDrugs.map((drug, i) =>
+  drug.drugId ? (
+    <Link
+      key={drug.drugId}
+      href={`/drug-index/${drug.drugId}`}
+      className="
+        rounded-full
+        border
+        border-cyan-700
+        bg-cyan-900/40
+        px-3
+        py-1
+        text-xs
+        font-medium
+        text-cyan-200
+        transition
+        hover:bg-cyan-700/40
+        hover:text-white
+        hover:border-cyan-500
+      "
+    >
+      {drug.name}
+    </Link>
+  ) : (
+    <span
+      key={`${drug.name}-${i}`}
+      className="
+        rounded-full
+        bg-slate-700
+        px-3
+        py-1
+        text-xs
+        text-slate-300
+      "
+    >
+      {drug.name}
+    </span>
+  )
+)}
+    </div>
+  </div>
+)}
                 </div>
               </div>
             );

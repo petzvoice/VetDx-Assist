@@ -1,12 +1,10 @@
 import { Species } from "@/lib/drugs/types";
 
-
 export interface KnowledgeCard {
   id: string;
   title: string;
   description?: string;
   species: Species[];
-  
 }
 
 export interface DiagnosticStep {
@@ -31,14 +29,37 @@ export interface Precaution {
 
 export interface WorkflowStep {
   id: string;
-
   step: number;
-
   title: string;
-
   description: string;
 }
 
+export interface RecommendedDrug {
+  drugId: string;
+
+  category:
+    | "Antibiotic"
+    | "Antiemetic"
+    | "NSAID"
+    | "Opioid"
+    | "Corticosteroid"
+    | "Fluid Therapy"
+    | "Gastrointestinal"
+    | "Cardiovascular"
+    | "Antiparasitic"
+    | "Emergency Drug"
+    | "Hepatoprotectant"
+    | "Nutritional Support";
+
+  priority:
+    | "First Line"
+    | "Initial Therapy"
+    | "Alternative"
+    | "Severe Cases"
+    | "Adjunctive";
+
+  notes?: string;
+}
 export interface DiseaseCard extends KnowledgeCard {
   synonyms?: string[];
 
@@ -50,7 +71,22 @@ export interface DiseaseCard extends KnowledgeCard {
 
   diagnostics: DiagnosticStep[];
 
+  /**
+   * Therapeutic approaches used for reasoning/display.
+   * Example:
+   * - Antibiotic
+   * - Fluid Therapy
+   * - Antiemetic
+   */
   drugCategories: DrugCategoryRecommendation[];
+
+  /**
+   * Drug IDs from the VetDx drug database.
+   * Used to display disease-specific recommended drugs.
+   * Example:
+   * ["doxycycline", "ampicillin", "penicillin-g"]
+   */
+ recommendedDrugs?: RecommendedDrug[];
 
   clinicalEvidence?: ClinicalEvidence;
 
@@ -60,6 +96,7 @@ export interface DiseaseCard extends KnowledgeCard {
 
   prognosis: string;
 }
+
 
 export interface StabilizationStep {
   id: string;
@@ -82,9 +119,7 @@ export interface DrugCategoryRecommendation {
   reason?: string;
 }
 
-export interface ClinicalProblemCard
-  extends KnowledgeCard {
-
+export interface ClinicalProblemCard extends KnowledgeCard {
   assessment: string;
 
   diagnostics: DiagnosticStep[];

@@ -24,5 +24,5 @@ export const drugs: Drug[] = [
   ...nsaids,
   ...corticosteroids,
   ...opioids,
-   ...gastrointestinal,
+  ...gastrointestinal,
 ];
