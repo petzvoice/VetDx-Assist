@@ -2,28 +2,37 @@
 
 import Card from "../ui/Card";
 
-type TestItem =
-  | string
-  | {
-      test?: string;
-      justification?: string;
-    };
 
 type DifferentialDiagnosisCardProps = {
   rank: number;
   name: string;
   confidence: number;
-  reasons?: string[];
-  tests?: TestItem[];
+
+  reasons: string[];
+
+  supportingFindings: string[];
+
+  againstFindings: string[];
+
+  classicFindings: string[];
+
+  strengtheningEvidence: string[];
+
+  weakeningEvidence: string[];
+
+  ruleOutFindings: string[];
 };
 
+
 function getLikelihood(confidence: number) {
+
   if (confidence >= 90) {
     return {
       label: "Very High",
       color: "bg-green-600",
     };
   }
+
 
   if (confidence >= 75) {
     return {
@@ -32,12 +41,14 @@ function getLikelihood(confidence: number) {
     };
   }
 
+
   if (confidence >= 60) {
     return {
       label: "Moderate",
       color: "bg-yellow-500",
     };
   }
+
 
   if (confidence >= 45) {
     return {
@@ -46,132 +57,358 @@ function getLikelihood(confidence: number) {
     };
   }
 
+
   return {
     label: "Very Low",
     color: "bg-red-500",
   };
+
 }
 
+
+
 export default function DifferentialDiagnosisCard({
+
   rank,
   name,
   confidence,
+
   reasons = [],
-  tests = [],
+
+  supportingFindings = [],
+
+  againstFindings = [],
+
+  classicFindings = [],
+
+  strengtheningEvidence = [],
+
+  weakeningEvidence = [],
+
+  ruleOutFindings = [],
+
 }: DifferentialDiagnosisCardProps) {
-  const likelihood = getLikelihood(confidence);
+
+
+  const likelihood =
+    getLikelihood(confidence);
+
+
 
   return (
+
     <Card title={`🏆 Differential Diagnosis #${rank}`}>
+
       <div className="space-y-8">
 
+
+        {/* Header */}
+
         <div className="flex items-center justify-between">
+
           <div>
+
             <h2 className="text-2xl font-bold text-white">
               {name}
             </h2>
 
+
             <p className="text-slate-400">
               AI Differential Diagnosis
             </p>
+
           </div>
 
+
+
           <div className="text-right">
+
             <p className="text-sm text-slate-400">
               Likelihood
             </p>
+
 
             <span
               className={`inline-block rounded-full px-4 py-2 font-bold text-white ${likelihood.color}`}
             >
               {likelihood.label}
             </span>
+
           </div>
+
         </div>
 
+
+
+        {/* Confidence bar */}
+
         <div>
+
           <div className="mb-2 flex justify-between text-sm text-slate-400">
-            <span>Likelihood</span>
-            <span>{likelihood.label}</span>
+
+            <span>
+              Likelihood
+            </span>
+
+
+            <span>
+              {confidence}%
+            </span>
+
           </div>
 
+
           <div className="h-3 overflow-hidden rounded-full bg-slate-700">
+
             <div
               className={`${likelihood.color} h-full transition-all duration-500`}
               style={{
                 width: `${confidence}%`,
               }}
             />
+
           </div>
+
         </div>
 
+
+
+
+        {/* Clinical reasoning */}
+
         <div>
+
           <h3 className="mb-3 text-lg font-semibold text-cyan-400">
             🧠 Clinical Reasoning
           </h3>
 
+
           {reasons.length > 0 ? (
+
             <ul className="space-y-2">
-              {reasons.map((reason, index) => (
+
+              {reasons.map((reason,index)=>(
+
                 <li
                   key={index}
                   className="rounded-lg border border-slate-700 bg-slate-900/50 p-3 text-slate-300"
                 >
                   • {reason}
                 </li>
+
               ))}
+
             </ul>
+
           ) : (
+
             <p className="text-slate-400">
               No clinical reasoning provided.
             </p>
+
           )}
+
         </div>
+
+
+
+
+
+        {/* Supporting findings */}
 
         <div>
-          <h3 className="mb-3 text-lg font-semibold text-cyan-400">
-            🧪 Recommended Diagnostic Tests
+
+          <h3 className="mb-3 text-lg font-semibold text-green-400">
+            ✅ Supporting Findings
           </h3>
 
-          {tests.length > 0 ? (
-            <div className="space-y-3">
-              {tests.map((test, index) => {
-                const testName =
-                  typeof test === "string"
-                    ? test
-                    : test.test ?? "Diagnostic Test";
 
-                const justification =
-                  typeof test === "string"
-                    ? ""
-                    : test.justification ?? "";
+          {supportingFindings.length > 0 ? (
 
-                return (
-                  <div
-                    key={index}
-                    className="rounded-xl border border-slate-700 bg-slate-900/50 p-4"
-                  >
-                    <p className="font-medium text-white">
-                      {testName}
-                    </p>
+            <ul className="space-y-2">
 
-                    {justification && (
-                      <p className="mt-2 text-sm text-slate-400">
-                        {justification}
-                      </p>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+              {supportingFindings.map((finding,index)=>(
+
+                <li
+                  key={index}
+                  className="rounded-lg border border-green-800 bg-green-900/20 p-3 text-slate-300"
+                >
+                  • {finding}
+                </li>
+
+              ))}
+
+            </ul>
+
           ) : (
+
             <p className="text-slate-400">
-              No additional diagnostic tests recommended.
+              No supporting findings available.
             </p>
+
           )}
+
         </div>
 
+{/* VetDx Classic Findings */}
+
+{classicFindings.length > 0 && (
+
+<div>
+
+  <h3 className="mb-3 text-lg font-semibold text-sky-400">
+    📚 Classic Disease Findings
+  </h3>
+
+  <ul className="space-y-2">
+
+    {classicFindings.map((finding,index)=>(
+
+      <li
+        key={index}
+        className="rounded-lg border border-sky-800 bg-sky-900/20 p-3 text-slate-300"
+      >
+        • {finding}
+      </li>
+
+    ))}
+
+  </ul>
+
+</div>
+
+)}
+
+{/* Findings that Strengthen Diagnosis */}
+
+{strengtheningEvidence.length > 0 && (
+
+<div>
+
+  <h3 className="mb-3 text-lg font-semibold text-emerald-400">
+    📈 Findings That Strengthen Diagnosis
+  </h3>
+
+  <ul className="space-y-2">
+
+    {strengtheningEvidence.map((finding, index) => (
+
+      <li
+        key={index}
+        className="rounded-lg border border-emerald-800 bg-emerald-900/20 p-3 text-slate-300"
+      >
+        • {finding}
+      </li>
+
+    ))}
+
+  </ul>
+
+</div>
+
+)}
+
+{/* Findings that Weaken Diagnosis */}
+
+{weakeningEvidence.length > 0 && (
+
+<div>
+
+  <h3 className="mb-3 text-lg font-semibold text-amber-400">
+    ⚠️ Findings That Weaken Diagnosis
+  </h3>
+
+  <ul className="space-y-2">
+
+    {weakeningEvidence.map((finding, index) => (
+
+      <li
+        key={index}
+        className="rounded-lg border border-amber-800 bg-amber-900/20 p-3 text-slate-300"
+      >
+        • {finding}
+      </li>
+
+    ))}
+
+  </ul>
+
+</div>
+
+)}
+
+{/* Findings Suggesting Another Disease */}
+
+{ruleOutFindings.length > 0 && (
+
+<div>
+
+  <h3 className="mb-3 text-lg font-semibold text-rose-400">
+    🚫 Findings Suggesting Another Disease
+  </h3>
+
+  <ul className="space-y-2">
+
+    {ruleOutFindings.map((finding, index) => (
+
+      <li
+        key={index}
+        className="rounded-lg border border-rose-800 bg-rose-900/20 p-3 text-slate-300"
+      >
+        • {finding}
+      </li>
+
+    ))}
+
+  </ul>
+
+</div>
+
+)}
+
+
+
+        {/* Against findings */}
+
+        <div>
+
+          <h3 className="mb-3 text-lg font-semibold text-red-400">
+            ❌ Findings Against
+          </h3>
+
+
+          {againstFindings.length > 0 ? (
+
+            <ul className="space-y-2">
+
+              {againstFindings.map((finding,index)=>(
+
+                <li
+                  key={index}
+                  className="rounded-lg border border-red-800 bg-red-900/20 p-3 text-slate-300"
+                >
+                  • {finding}
+                </li>
+
+              ))}
+
+            </ul>
+
+          ) : (
+
+            <p className="text-slate-400">
+              No conflicting findings identified.
+            </p>
+
+          )}
+
+        </div>
+
+
       </div>
+
     </Card>
+
   );
+
 }

@@ -95,6 +95,16 @@ export interface DiseaseCard extends KnowledgeCard {
   precautions: Precaution[];
 
   prognosis: string;
+
+  strengtheningEvidence: string[];
+
+weakeningEvidence: string[];
+
+classicFindings: string[];
+
+ruleOutFindings: string[];
+
+  stabilization?: string[];
 }
 
 

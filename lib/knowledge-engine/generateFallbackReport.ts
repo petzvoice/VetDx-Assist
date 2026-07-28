@@ -1,6 +1,35 @@
 import type { AIClinicalReport } from "@/types/ai";
 import { drugs } from "@/lib/drugs/data";
 
+function buildAgainstFindings(
+  disease: any,
+  matchedEvidence: any[]
+): string[] {
+
+  const matched = new Set(
+  (matchedEvidence ?? [])
+    .map((e: any) => e.finding)
+    .filter(Boolean)
+    .map((finding: string) => finding.toLowerCase())
+);
+
+  return (disease.clinicalSigns ?? [])
+    .map((sign: any) =>
+      typeof sign === "string"
+        ? sign
+        : sign.name ?? sign.finding ?? ""
+    )
+    .filter(Boolean)
+    .filter(
+      (sign: string) =>
+        !matched.has(sign.toLowerCase())
+    )
+    .slice(0, 5)
+    .map(
+      (sign: string) =>
+        `${sign} not reported`
+    );
+}
 export function generateFallbackReport(
   caseData: any,
   rankedDiseases: any[]
@@ -62,33 +91,82 @@ export function generateFallbackReport(
     Math.min(95, item.score)
   ),
 
-  reasoning: [
-  `${item.disease.title} matched based on ${
-    item.matchedEvidence?.length ?? 0
-  } clinical finding(s).`,
-],
+  reasoning:
+  (item.matchedEvidence ?? []).map(
+    (e: any) =>
+      `${e.finding} supports ${item.disease.title}.`
+  ),
 
 supportingFindings:
   (item.matchedEvidence ?? []).map(
     (e: any) => e.finding
   ),
 
-  againstFindings: [],
+  againstFindings: buildAgainstFindings(
+  item.disease,
+  item.matchedEvidence
+),
 
-  recommendedTests: [],
+ recommendedTests:
+  (item.disease.diagnostics ?? []).map(
+    (test: any) => ({
+      id: test.id,
+      name: test.name,
+      priority: test.priority,
+      reason: test.reason,
+    })
+  ),
 
-  initialTreatment: [],
+  initialTreatment: [
+  ...(item.disease.stabilization ?? []).map(
+    (step: any) =>
+      typeof step === "string"
+        ? step
+        : step.name ?? step.action ?? ""
+  ),
+
+  ...((item.disease.recommendedDrugs ?? []).map(
+    (drug: any) => {
+      const drugData = drugs.find(
+        (d) => d.id === drug.drugId
+      );
+
+      return {
+        drugId: drug.drugId,
+        name:
+          drugData?.genericName ??
+          drug.drugId,
+        category: drug.category,
+        priority: drug.priority,
+      };
+    }
+  ))
+],
 
   diseaseId: item.disease.id,
 
- vetDxEvidence:
+vetDxEvidence:
   (item.matchedEvidence ?? []).map(
     (e: any) => e.finding
   ),
+
+classicFindings:
+  item.disease.classicFindings ?? [],
+
+strengtheningEvidence:
+  item.disease.strengtheningEvidence ?? [],
+
+weakeningEvidence:
+  item.disease.weakeningEvidence ?? [],
+
+ruleOutFindings:
+  item.disease.ruleOutFindings ?? [],
 })),
 
-    recommendedDiagnostics:
-  disease.recommendedDiagnostics ?? [],
+   recommendedDiagnostics:
+  disease.recommendedDiagnostics ??
+  disease.diagnostics ??
+  [],
 
     stabilization:
   disease.stabilization ?? [],
@@ -133,10 +211,17 @@ supportingFindings:
   disease.clinicalPearls ?? [],
 
     prognosis:
-  disease.prognosis ?? {
-    shortTerm: "",
-    longTerm: "",
-  },
+typeof disease.prognosis === "object"
+?
+disease.prognosis
+:
+{
+  shortTerm:
+    disease.prognosis ?? "",
+
+  longTerm:
+    disease.prognosis ?? "",
+},
 
     clientSummary:
   disease.clientSummary ??

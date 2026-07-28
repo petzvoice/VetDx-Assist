@@ -40,6 +40,13 @@ export interface DifferentialDiagnosis {
       }[];
 diseaseId?: string | null;
       vetDxEvidence?: string[];
+      classicFindings?: string[];
+
+strengtheningEvidence?: string[];
+
+weakeningEvidence?: string[];
+
+ruleOutFindings?: string[];
 }
 
 export interface DiagnosticRecommendation {
@@ -106,8 +113,7 @@ export interface AIClinicalReport {
   differentials: DifferentialDiagnosis[];
 
   recommendedDiagnostics:
-    | string[]
-    | DiagnosticRecommendation[];
+    DiagnosticRecommendation[];
 
   stabilization:
     | string[]

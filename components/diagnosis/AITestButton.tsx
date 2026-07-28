@@ -25,8 +25,7 @@ export default function AITestButton({
 
       const report = await generateDiagnosis(caseData);
 
-      console.log("AI REPORT:", report);
-
+      
       onResult(report);
     } catch (error: any) {
       console.error("AI ERROR:", error);

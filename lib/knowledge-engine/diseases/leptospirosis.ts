@@ -167,6 +167,13 @@ export const leptospirosis: DiseaseCard = {
   },
 ],
 
+stabilization:[
+  "Assess hydration status and correct dehydration.",
+  "Provide IV fluid therapy based on renal status.",
+  "Control vomiting and nausea.",
+  "Monitor urine output and renal parameters.",
+],
+
   clinicalEvidence: {
   history: [
     { finding: "Stagnant water", weight: 40 },
@@ -256,6 +263,67 @@ export const leptospirosis: DiseaseCard = {
 
 
   prognosis:
-    "Prognosis depends on severity of renal and hepatic involvement. Early diagnosis and aggressive supportive care improve outcomes. Severe kidney failure, pulmonary hemorrhage, or multi-organ dysfunction carries a guarded prognosis."
+  "Prognosis depends on severity of renal and hepatic involvement. Early diagnosis and aggressive supportive care improve outcomes. Severe kidney failure, pulmonary hemorrhage, or multi-organ dysfunction carries a guarded prognosis.",
 
+strengtheningEvidence: [
+
+  "Positive Leptospira PCR",
+
+  "Positive MAT serology",
+
+  "Azotemia",
+
+  "Proteinuria",
+
+  "Isosthenuria",
+
+  "Thrombocytopenia",
+
+  "Elevated liver enzymes",
+
+  "Hyperbilirubinemia"
+
+],
+
+weakeningEvidence: [
+
+  "Negative PCR with appropriate sampling",
+
+  "Negative paired MAT titres",
+
+  "Normal renal function",
+
+  "No environmental exposure risk",
+
+  "Alternative confirmed diagnosis"
+
+],
+
+classicFindings: [
+
+  "Stagnant water exposure",
+
+  "Rodent exposure",
+
+  "Acute fever",
+
+  "Vomiting",
+
+  "Lethargy",
+
+  "Jaundice",
+
+  "Acute kidney injury"
+
+],
+
+ruleOutFindings: [
+
+  "Corneal edema",
+
+  "Marked coagulopathy without renal involvement",
+
+  "Chronic liver disease without acute illness"
+
+],
 };

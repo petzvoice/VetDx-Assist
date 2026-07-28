@@ -47,32 +47,58 @@ export default function AIClinicalReport({
       />
 
       {Array.isArray(report.differentials) &&
-        report.differentials.map(
-          (disease, index) => (
-            <DifferentialDiagnosisCard
-              key={index}
-              rank={index + 1}
-              name={disease?.name ?? "Unknown"}
-              confidence={
-                disease?.confidence ?? 50
-              }
-              reasons={
-                Array.isArray(
-                  disease?.reasoning
-                )
-                  ? disease.reasoning
-                  : []
-              }
-              tests={
-                Array.isArray(
-                  disease?.recommendedTests
-                )
-                  ? disease.recommendedTests
-                  : []
-              }
-            />
-          )
-        )}
+  report.differentials.map(
+    (disease, index) => (
+      <DifferentialDiagnosisCard
+  key={index}
+  rank={index + 1}
+  name={disease?.name ?? "Unknown"}
+  confidence={disease?.confidence ?? 50}
+
+  reasons={
+    Array.isArray(disease?.reasoning)
+      ? disease.reasoning
+      : []
+  }
+
+  supportingFindings={
+    Array.isArray(disease?.supportingFindings)
+      ? disease.supportingFindings
+      : []
+  }
+
+  againstFindings={
+    Array.isArray(disease?.againstFindings)
+      ? disease.againstFindings
+      : []
+  }
+
+  classicFindings={
+    Array.isArray(disease?.classicFindings)
+      ? disease.classicFindings
+      : []
+  }
+
+  strengtheningEvidence={
+    Array.isArray(disease?.strengtheningEvidence)
+      ? disease.strengtheningEvidence
+      : []
+  }
+
+  weakeningEvidence={
+    Array.isArray(disease?.weakeningEvidence)
+      ? disease.weakeningEvidence
+      : []
+  }
+
+  ruleOutFindings={
+    Array.isArray(disease?.ruleOutFindings)
+      ? disease.ruleOutFindings
+      : []
+  }
+/>
+    )
+  )}
 
       <RecommendedDiagnosticsCard
         diagnostics={

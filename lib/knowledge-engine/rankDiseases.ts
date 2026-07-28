@@ -23,8 +23,10 @@ export function rankDiseases(
 
     })
     .filter(
-      (item) => item.score > 0
-    )
+  (item) =>
+    item.score >= 10 &&
+    item.matchedEvidence.length > 0
+)
     .sort(
       (a, b) =>
         b.score - a.score

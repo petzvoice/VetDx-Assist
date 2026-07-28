@@ -322,11 +322,33 @@ Matched Evidence: ${evidence}
       : [];
 
     report.recommendedDiagnostics =
-      Array.isArray(
-        report.recommendedDiagnostics
-      )
-        ? report.recommendedDiagnostics
-        : [];
+Array.isArray(report.recommendedDiagnostics)
+
+?
+report.recommendedDiagnostics.map((test:any)=>({
+
+  id:
+    test.id ?? "",
+
+  test:
+  test.name ??
+  test.test ??
+  test.diagnostic ??
+  "Diagnostic Test",
+
+  priority:
+    test.priority ??
+    "Recommended",
+
+  reason:
+    test.reason ??
+    ""
+
+}))
+
+:
+
+[];
 
     report.stabilization =
       Array.isArray(
@@ -406,98 +428,111 @@ report.prognosis = {
   longTerm,
 };
 
-   report.differentials = Array.isArray(
-  report.differentials
-)
-  ? report.differentials.flatMap((item: any) => {
+   report.differentials =
+Array.isArray(report.differentials)
 
-      // Structure A
-      if (Array.isArray(item.diagnoses)) {
-        return item.diagnoses.map(
-          (diag: any) => ({
-            name:
-              diag.diagnosis ??
-              "Unknown Diagnosis",
+? report.differentials.flatMap((item:any)=>{
 
-            category:
-              item.problem ??
-              "General",
 
-            confidence:
-              Number(diag.confidence) ||
-              50,
+  // FALLBACK FORMAT FROM generateFallbackReport
+  if (
+    item.name &&
+    !item.diagnosis &&
+    !item.diagnoses
+  ) {
 
-           reasoning:
-Array.isArray(diag.reasoning)
-  ? diag.reasoning
-  : diag.reasoning
-    ? [diag.reasoning]
-    : diag.explanation
-      ? [diag.explanation]
-      : [],
+    return [
+      {
+        ...item,
 
-            supportingFindings:
-              Array.isArray(
-                diag.supportingFindings
-              )
-                ? diag.supportingFindings
-                : [],
+        reasoning:
+          Array.isArray(item.reasoning)
+            ? item.reasoning
+            : [],
 
-            againstFindings:
-              Array.isArray(
-                diag.findingsAgainst
-              )
-                ? diag.findingsAgainst
-                : [],
+        supportingFindings:
+          item.supportingFindings ?? [],
 
-            recommendedTests: [],
+        againstFindings:
+          item.againstFindings ?? [],
 
-            initialTreatment: [],
-          })
-        );
+        diseaseId:
+          item.diseaseId ?? null,
+
+        vetDxEvidence:
+          item.vetDxEvidence ?? []
       }
+    ];
 
-      // Structure B
-      if (item.diagnosis) {
-        return [
-          {
-            name: item.diagnosis,
+  }
 
-            category: "General",
 
-            confidence:
-              Number(item.confidence) ||
-              50,
 
-            reasoning:
-  Array.isArray(item.reasoning)
-    ? item.reasoning
-    : [],
-            supportingFindings:
-              Array.isArray(
-                item.supportingFindings
-              )
-                ? item.supportingFindings
-                : [],
+  // GEMINI FORMAT A
 
-            againstFindings:
-              Array.isArray(
-                item.findingsAgainst
-              )
-                ? item.findingsAgainst
-                : [],
+  if(Array.isArray(item.diagnoses)){
 
-            recommendedTests: [],
+    return item.diagnoses.map((diag:any)=>({
 
-            initialTreatment: [],
-          },
-        ];
+      name:
+        diag.diagnosis ??
+        "Unknown Diagnosis",
+
+      category:
+        item.problem ??
+        "General",
+
+      confidence:
+        Number(diag.confidence) || 50,
+
+      reasoning: [],
+
+      supportingFindings:
+        diag.supportingFindings ?? [],
+
+      againstFindings:
+        diag.findingsAgainst ?? []
+
+    }));
+
+  }
+
+
+
+  // GEMINI FORMAT B
+
+  if(item.diagnosis){
+
+    return [
+      {
+        name:
+          item.diagnosis,
+
+        category:
+          "General",
+
+        confidence:
+          Number(item.confidence) || 50,
+
+        reasoning: [],
+
+        supportingFindings:
+          item.supportingFindings ?? [],
+
+        againstFindings:
+          item.findingsAgainst ?? []
       }
+    ];
 
-      return [];
-    })
-  : [];
+  }
 
+
+
+  return [];
+
+})
+
+: [];
 report.differentials =
   report.differentials.map((diag:any)=>{
 
@@ -515,15 +550,30 @@ const matchedDisease =
       diseaseName.includes(diagnosisName)
     );
   });
+
+ 
+
     return {
   ...diag,
 
   diseaseId: matchedDisease?.disease.id ?? null,
 
   vetDxEvidence:
-    matchedDisease?.matchedEvidence
-      ?.map((e: any) => e.finding)
-      ?? []
+    matchedDisease?.matchedEvidence?.map(
+      (e:any)=>e.finding
+    ) ?? [],
+
+  classicFindings:
+    matchedDisease?.disease.classicFindings ?? [],
+
+  strengtheningEvidence:
+    matchedDisease?.disease.strengtheningEvidence ?? [],
+
+  weakeningEvidence:
+    matchedDisease?.disease.weakeningEvidence ?? [],
+
+  ruleOutFindings:
+    matchedDisease?.disease.ruleOutFindings ?? [],
 };
 
   });

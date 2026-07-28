@@ -67,11 +67,7 @@ export default function ClinicalAnalysisPage() {
         );
       }
 
-      console.log(
-        "Extracted Case:",
-        extraction.data
-      );
-
+      
       setStructuredCase(extraction.data);
 
       // STEP 2 - Generate AI Report
@@ -80,10 +76,7 @@ export default function ClinicalAnalysisPage() {
           extraction.data
         );
 
-      console.log(
-        "AI Report:",
-        aiReport
-      );
+    
 
       setReport(aiReport);
       setSaved(false);
