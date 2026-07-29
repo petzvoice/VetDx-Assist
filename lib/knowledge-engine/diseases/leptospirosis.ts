@@ -160,6 +160,12 @@ export const leptospirosis: DiseaseCard = {
     priority: "Initial Therapy",
     category: "Antibiotic",
   },
+
+  {
+    drugId: "penicillin-g",
+    priority: "Initial Therapy",
+    category: "Antibiotic",
+  },
   {
     drugId: "maropitant",
     priority: "Adjunctive",
