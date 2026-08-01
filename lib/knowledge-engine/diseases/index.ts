@@ -7,8 +7,10 @@ import { bovineBabesiosis } from './bovine_babesiosis';
 import { bovineBloat } from './bovine_bloat';
 import { bovineClostridialDiseases } from './bovine_clostridial_diseases';
 import { bovineCoccidiosis } from './bovine_coccidiosis';
+import { bovineDiaphragmaticHernia } from './bovine_diaphragmatic_hernia';
 import { bovineDisplacedAbomasum } from './bovine_displaced_abomasum';
 import { bovineDystocia } from './bovine_dystocia';
+import { bovineEarlyEmbryonicDeath } from './bovine_early_embryonic_death';
 import { bovineEndometritis } from './bovine_endometritis';
 import { bovineFasciolosis } from './bovine_fasciolosis';
 import { bovineFootAndMouthDisease } from './bovine_foot_and_mouth_disease';
@@ -211,6 +213,42 @@ import { felineUrethralObstruction } from './feline_urethral_obstruction';
 import { leptospirosis } from './leptospirosis';
 import { lymeDisease } from './lyme-disease';
 import { pyometra } from './pyometra';
+import { smallRuminantAbortion } from './small_ruminant_abortion';
+import { smallRuminantBrucellosis } from './small_ruminant_brucellosis';
+import { smallRuminantCaseousLymphadenitis } from './small_ruminant_caseous_lymphadenitis';
+import { smallRuminantCoccidiosis } from './small_ruminant_coccidiosis';
+import { smallRuminantContagiousCaprinePleuropneumonia } from './small_ruminant_contagious_caprine_pleuropneumonia';
+import { smallRuminantContagiousOvineDigitalDermatitis } from './small_ruminant_contagious_ovine_digital_dermatitis';
+import { smallRuminantCopperToxicity } from './small_ruminant_copper_toxicity';
+import { smallRuminantEarlyEmbryonicDeath } from './small_ruminant_early_embryonic_death';
+import { smallRuminantEnterotoxemia } from './small_ruminant_enterotoxemia';
+import { smallRuminantFasciolosis } from './small_ruminant_fasciolosis';
+import { smallRuminantFootAbscess } from './small_ruminant_foot_abscess';
+import { smallRuminantFootRot } from './small_ruminant_foot_rot';
+import { smallRuminantGastrointestinalNematodiasis } from './small_ruminant_gastrointestinal_nematodiasis';
+import { smallRuminantHaemonchosis } from './small_ruminant_haemonchosis';
+import { smallRuminantHeatStress } from './small_ruminant_heat_stress';
+import { smallRuminantHypocalcemia } from './small_ruminant_hypocalcemia';
+import { smallRuminantHypomagnesemia } from './small_ruminant_hypomagnesemia';
+import { smallRuminantHypothermia } from './small_ruminant_hypothermia';
+import { smallRuminantListeriosis } from './small_ruminant_listeriosis';
+import { smallRuminantLungworm } from './small_ruminant_lungworm';
+import { smallRuminantMange } from './small_ruminant_mange';
+import { smallRuminantMastitis } from './small_ruminant_mastitis';
+import { smallRuminantMetritis } from './small_ruminant_metritis';
+import { smallRuminantNitratePoisoning } from './small_ruminant_nitrate_poisoning';
+import { smallRuminantOrf } from './small_ruminant_orf';
+import { smallRuminantPesteDesPetitsRuminants } from './small_ruminant_peste_des_petits_ruminants';
+import { smallRuminantPlantPoisoning } from './small_ruminant_plant_poisoning';
+import { smallRuminantPneumonia } from './small_ruminant_pneumonia';
+import { smallRuminantPolioencephalomalacia } from './small_ruminant_polioencephalomalacia';
+import { smallRuminantPregnancyToxemia } from './small_ruminant_pregnancy_toxemia';
+import { smallRuminantRetainedFetalMembranes } from './small_ruminant_retained_fetal_membranes';
+import { smallRuminantTapewormInfection } from './small_ruminant_tapeworm_infection';
+import { smallRuminantTetanus } from './small_ruminant_tetanus';
+import { smallRuminantUreaToxicity } from './small_ruminant_urea_toxicity';
+import { smallRuminantUrolithiasis } from './small_ruminant_urolithiasis';
+import { smallRuminantWhiteMuscleDisease } from './small_ruminant_white_muscle_disease';
 
 export const diseases = [
   anaplasmosis,
@@ -222,8 +260,10 @@ export const diseases = [
   bovineBloat,
   bovineClostridialDiseases,
   bovineCoccidiosis,
+  bovineDiaphragmaticHernia,
   bovineDisplacedAbomasum,
   bovineDystocia,
+  bovineEarlyEmbryonicDeath,
   bovineEndometritis,
   bovineFasciolosis,
   bovineFootAndMouthDisease,
@@ -426,4 +466,40 @@ export const diseases = [
   leptospirosis,
   lymeDisease,
   pyometra,
+  smallRuminantAbortion,
+  smallRuminantBrucellosis,
+  smallRuminantCaseousLymphadenitis,
+  smallRuminantCoccidiosis,
+  smallRuminantContagiousCaprinePleuropneumonia,
+  smallRuminantContagiousOvineDigitalDermatitis,
+  smallRuminantCopperToxicity,
+  smallRuminantEarlyEmbryonicDeath,
+  smallRuminantEnterotoxemia,
+  smallRuminantFasciolosis,
+  smallRuminantFootAbscess,
+  smallRuminantFootRot,
+  smallRuminantGastrointestinalNematodiasis,
+  smallRuminantHaemonchosis,
+  smallRuminantHeatStress,
+  smallRuminantHypocalcemia,
+  smallRuminantHypomagnesemia,
+  smallRuminantHypothermia,
+  smallRuminantListeriosis,
+  smallRuminantLungworm,
+  smallRuminantMange,
+  smallRuminantMastitis,
+  smallRuminantMetritis,
+  smallRuminantNitratePoisoning,
+  smallRuminantOrf,
+  smallRuminantPesteDesPetitsRuminants,
+  smallRuminantPlantPoisoning,
+  smallRuminantPneumonia,
+  smallRuminantPolioencephalomalacia,
+  smallRuminantPregnancyToxemia,
+  smallRuminantRetainedFetalMembranes,
+  smallRuminantTapewormInfection,
+  smallRuminantTetanus,
+  smallRuminantUreaToxicity,
+  smallRuminantUrolithiasis,
+  smallRuminantWhiteMuscleDisease,
 ];
