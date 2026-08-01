@@ -333,6 +333,12 @@ export const felineHepaticLipidosis: DiseaseCard = {
     "Obese cat with sudden illness"
 
   ],
+  
+  priorityFindings: [
+   "jaundice",
+   "anorexia",
+   "weight loss"
+],
 
   ruleOutFindings:[
 

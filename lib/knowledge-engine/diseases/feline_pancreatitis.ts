@@ -333,6 +333,11 @@ export const felinePancreatitis: DiseaseCard = {
 
   ],
 
+  priorityFindings: [
+   "vomiting",
+   "anorexia"
+],
+
   ruleOutFindings:[
 
     "Feline inflammatory bowel disease",

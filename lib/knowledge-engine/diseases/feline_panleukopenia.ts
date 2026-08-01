@@ -234,15 +234,24 @@ export const felinePanleukopenia: DiseaseCard = {
 
     ],
 
-    against:[
-
-      { finding:"Fully vaccinated adult cat", weight:-40 },
-
-      { finding:"Normal white blood cell count", weight:-30 },
-
-      { finding:"Alternative gastrointestinal disease confirmed", weight:-40 }
-
-    ],
+    against: [
+  {
+    finding: "jaundice",
+    weight: 12
+  },
+  {
+    finding: "7-year-old",
+    weight: 15
+  },
+  {
+    finding: "adult cat",
+    weight: 10
+  },
+  {
+    finding: "chronic weight loss",
+    weight: 12
+  }
+],
 
   },
 
@@ -330,6 +339,19 @@ export const felinePanleukopenia: DiseaseCard = {
     "Severe leukopenia"
 
   ],
+
+  priorityFindings: [
+  "kitten",
+  "severe leukopenia",
+  "diarrhea",
+  "acute illness"
+],
+
+  requiredFindings: [
+  "kitten",
+  "young cat",
+  "leukopenia"
+],
 
   ruleOutFindings:[
 

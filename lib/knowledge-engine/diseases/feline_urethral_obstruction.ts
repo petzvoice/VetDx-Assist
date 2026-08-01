@@ -335,6 +335,12 @@ export const felineUrethralObstruction: DiseaseCard = {
 
   ],
 
+  requiredFindings: [
+  "straining",
+  "no urine",
+  "urinary obstruction"
+],
+
   ruleOutFindings:[
 
     "Feline idiopathic cystitis",

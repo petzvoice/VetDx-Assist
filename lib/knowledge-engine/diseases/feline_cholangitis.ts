@@ -335,6 +335,12 @@ export const felineCholangitis: DiseaseCard = {
 
   ],
 
+  priorityFindings: [
+   "jaundice",
+   "vomiting",
+   "anorexia"
+],
+
   ruleOutFindings:[
 
     "Hepatic lipidosis",

@@ -329,6 +329,11 @@ export const felineHeartwormDisease: DiseaseCard = {
 
   ],
 
+  requiredFindings: [
+  "cough",
+  "dyspnea"
+],
+
   ruleOutFindings:[
 
     "Feline asthma",

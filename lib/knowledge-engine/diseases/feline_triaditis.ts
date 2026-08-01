@@ -332,6 +332,11 @@ export const felineTriaditis: DiseaseCard = {
     "Liver and pancreatic abnormalities"
 
   ],
+  priorityFindings: [
+   "vomiting",
+   "anorexia",
+   "weight loss"
+],
 
   ruleOutFindings:[
 

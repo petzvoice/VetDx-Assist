@@ -197,9 +197,15 @@ weakeningEvidence: string[];
 
 classicFindings: string[];
 
+priorityFindings?: string[];
+
+requiredFindings?: string[];
+
 ruleOutFindings: string[];
 
   stabilization?: string[];
+
+  
 }
 
 

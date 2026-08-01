@@ -1,6 +1,8 @@
 import { DiseaseCard } from "./types";
+import { detectSpecies } from "./speciesFilter";
 
-const synonyms: Record<string,string[]> = {
+
+const synonyms: Record<string, string[]> = {
 
   fever: [
     "fever",
@@ -21,86 +23,502 @@ const synonyms: Record<string,string[]> = {
     "weakness",
     "dull",
     "depressed"
+  ],
+
+  anorexia: [
+    "anorexia",
+    "loss of appetite",
+    "not eating",
+    "reduced appetite",
+    "poor appetite"
+  ],
+
+  jaundice: [
+    "jaundice",
+    "icterus",
+    "yellow gums",
+    "yellow mucous membranes"
+  ],
+
+  diarrhea: [
+    "diarrhea",
+    "diarrhoea",
+    "loose stool"
+  ],
+
+  "weight loss": [
+    "weight loss",
+    "loss of weight",
+    "emaciation",
+    "thin"
   ]
 
 };
 
-function contains(text: string, keyword: string) {
 
-  const lowerText = text.toLowerCase();
-  const lowerKeyword = keyword.toLowerCase();
 
-  if (lowerText.includes(lowerKeyword)) {
+function contains(
+  text: string,
+  keyword: string
+): boolean {
+
+
+  const lowerText =
+    text.toLowerCase();
+
+
+  const lowerKeyword =
+    keyword.toLowerCase();
+
+
+
+  if (
+    lowerText.includes(lowerKeyword)
+  ) {
+
     return true;
+
   }
 
-  const synonymList = synonyms[lowerKeyword];
+
+
+  const synonymList =
+    synonyms[lowerKeyword];
+
+
 
   if (!synonymList) {
+
     return false;
+
   }
 
-  return synonymList.some((word) =>
-    lowerText.includes(word.toLowerCase())
+
+
+  return synonymList.some(
+    (word) =>
+      lowerText.includes(
+        word.toLowerCase()
+      )
   );
+
 }
+
+
+
+
 
 export function scoreDisease(
   disease: DiseaseCard,
   clinicalText: string
 ) {
+
+
   let score = 0;
+
+
 
   const matchedEvidence: {
     finding: string;
     weight: number;
   }[] = [];
 
-  const evidence = disease.clinicalEvidence;
 
- if (!evidence) {
-  return {
-    score: 0,
-    matchedEvidence: []
-  };
-}
+
+
+
+  /*
+    SPECIES PROTECTION
+
+    Prevents:
+    Cat case -> cattle diseases
+    Dog case -> horse diseases
+  */
+
+
+  const detectedSpecies =
+    detectSpecies(clinicalText);
+
+
+
+  if (
+
+    detectedSpecies.length > 0 &&
+
+    disease.species &&
+
+    disease.species.length > 0
+
+  ) {
+
+
+    const speciesMatch =
+      disease.species.some(
+        (species) =>
+          detectedSpecies.includes(species)
+      );
+
+
+
+    if (!speciesMatch) {
+
+
+      return {
+
+        score: -1000,
+
+        matchedEvidence: []
+
+      };
+
+    }
+
+  }
+
+
+
+
+
+  const evidence =
+    disease.clinicalEvidence;
+
+
+
+  if (!evidence) {
+
+
+    return {
+
+      score: 0,
+
+      matchedEvidence: []
+
+    };
+
+  }
+
+
+
+
+
+
+
 
   function scoreSection(
-  items?: { finding: string; weight: number }[],
-  multiplier = 1
-) {
-  if (!items) return;
+    items:
+      {
+        finding: string;
+        weight: number;
+      }[] | undefined,
 
-  for (const item of items) {
-    if (contains(clinicalText, item.finding)) {
+    multiplier = 1
 
-  const weightedScore =
-    item.weight * multiplier;
+  ) {
 
-  score += weightedScore;
+
+
+    if (!items) return;
+
+
+
+    for (const item of items) {
+
+
+
+      if (
+
+        contains(
+          clinicalText,
+          item.finding
+        )
+
+      ) {
+
+
+
+        const weightedScore =
+          item.weight * multiplier;
+
+
+
+        score += weightedScore;
+
+
+
+        const alreadyExists = matchedEvidence.some(
+  e => e.finding.toLowerCase() === item.finding.toLowerCase()
+);
+
+if (!alreadyExists) {
 
   matchedEvidence.push({
+
     finding: item.finding,
+
     weight: weightedScore
+
   });
-}
-  }
+
 }
 
-  scoreSection(evidence.signalment);
-  scoreSection(evidence.history);
-  scoreSection(evidence.clinicalSigns);
-  scoreSection(evidence.physicalExam);
-  scoreSection(evidence.cbc);
-  scoreSection(evidence.biochemistry);
-  scoreSection(evidence.urinalysis);
-  scoreSection(evidence.imaging);
-  scoreSection(evidence.toxicology);
-  scoreSection(evidence.infectiousDisease);
-  scoreSection(evidence.supports);
- scoreSection(evidence.against, -1);
+
+      }
+
+
+    }
+
+
+  }
+
+
+
+
+
+
+
+  /*
+    Clinical evidence scoring
+  */
+
+
+  scoreSection(
+    evidence.signalment
+  );
+
+
+  scoreSection(
+    evidence.history
+  );
+
+
+  scoreSection(
+    evidence.clinicalSigns
+  );
+
+
+  scoreSection(
+    evidence.physicalExam
+  );
+
+
+  scoreSection(
+    evidence.cbc
+  );
+
+
+  scoreSection(
+    evidence.biochemistry
+  );
+
+
+  scoreSection(
+    evidence.urinalysis
+  );
+
+
+  scoreSection(
+    evidence.imaging
+  );
+
+
+  scoreSection(
+    evidence.toxicology
+  );
+
+
+  scoreSection(
+    evidence.infectiousDisease
+  );
+
+
+  scoreSection(
+    evidence.supports
+  );
+
+
+
+
+
+
+  /*
+    Negative evidence penalty
+  */
+
+
+  scoreSection(
+    evidence.against,
+    -1
+  );
+
+
+
+
+
+
+
+
+  /*
+    Disease-specific priority findings
+
+    Example:
+
+    Feline Hepatic Lipidosis
+
+    jaundice
+    anorexia
+    weight loss
+
+    gets additional weight
+  */
+
+
+  if (
+
+    disease.priorityFindings
+
+  ) {
+
+
+
+    for (
+
+      const finding of disease.priorityFindings
+
+    ) {
+
+
+
+      if (
+
+        contains(
+          clinicalText,
+          finding
+        )
+
+      ) {
+
+
+
+        score += 15;
+
+
+
+        const alreadyExists = matchedEvidence.some(
+  e => e.finding.toLowerCase() === finding.toLowerCase()
+);
+
+if (!alreadyExists) {
+
+  matchedEvidence.push({
+
+    finding,
+
+    weight: 15
+
+  });
+
+}
+
+
+      }
+
+
+    }
+
+
+  }
+
+
+if (disease.requiredFindings) {
+
+  let matchedRequired = 0;
+
+  for (const finding of disease.requiredFindings) {
+
+    if (contains(clinicalText, finding)) {
+      matchedRequired++;
+    }
+
+  }
+
+  if (matchedRequired === 0) {
+    score -= 40;
+  }
+
+}
+
+
+
+
+
+  /*
+    Classic finding penalty
+
+    If disease usually has
+    important signs missing,
+    reduce score.
+  */
+
+
+  if (
+
+    disease.classicFindings &&
+
+    disease.classicFindings.length > 0
+
+  ) {
+
+
+
+    let missingClassic = 0;
+
+
+
+    for (
+
+      const finding of disease.classicFindings
+
+    ) {
+
+
+
+      if (
+
+        !contains(
+          clinicalText,
+          finding
+        )
+
+      ) {
+
+        missingClassic++;
+
+      }
+
+
+    }
+
+
+
+    score -=
+      missingClassic * 2;
+
+
+  }
+
+
+
+
+
+
+
   return {
-  score,
-  matchedEvidence
-};
+
+    score,
+
+    matchedEvidence
+
+  };
+
+
 }
