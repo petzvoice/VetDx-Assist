@@ -170,39 +170,51 @@ export const felineHepaticLipidosis: DiseaseCard = {
   ],
 
   clinicalEvidence:{
+    signalment:[
 
-    history:[
+{
+finding:"Adult cat",
+weight:25
+},
 
-      { finding:"Prolonged anorexia", weight:85 },
+{
+finding:"Obese cat",
+weight:60
+}
 
-      { finding:"Recent rapid weight loss", weight:80 },
+],
 
-      { finding:"Obesity history", weight:65 },
+    history: [
 
-      { finding:"Stress event", weight:45 },
+  { finding: "Prolonged anorexia", weight: 100 },
 
-      { finding:"Concurrent disease", weight:60 }
+  { finding: "Recent rapid weight loss", weight: 95 },
 
-    ],
+  { finding: "Obesity history", weight: 85 },
 
-    clinicalSigns:[
+  { finding: "Stress event", weight: 50 },
 
-      { finding:"Jaundice", weight:85 },
+  { finding: "Concurrent disease", weight: 65 }
 
-      { finding:"Anorexia", weight:90 },
+],
 
-      { finding:"Weight loss", weight:80 },
+   clinicalSigns: [
 
-      { finding:"Lethargy", weight:65 },
+  { finding: "Anorexia", weight: 100 },
 
-      { finding:"Vomiting", weight:45 },
+  { finding: "Jaundice", weight: 95 },
 
-      { finding:"Dehydration", weight:60 },
+  { finding: "Weight loss", weight: 90 },
 
-      { finding:"Muscle wasting", weight:55 }
+  { finding: "Lethargy", weight: 60 },
 
-    ],
+  { finding: "Vomiting", weight: 40 },
 
+  { finding: "Dehydration", weight: 50 },
+
+  { finding: "Muscle wasting", weight: 60 }
+
+],
     biochemistry:[
 
       { finding:"Elevated liver enzymes", weight:70 },
@@ -225,27 +237,63 @@ export const felineHepaticLipidosis: DiseaseCard = {
 
     ],
 
-    supports:[
+    supports: [
 
-      { finding:"History of anorexia followed by weight loss", weight:90 },
+  {
+    finding: "Prolonged anorexia",
+    weight: 100
+  },
 
-      { finding:"Jaundice", weight:80 },
+  {
+    finding: "Rapid weight loss",
+    weight: 95
+  },
 
-      { finding:"Compatible liver ultrasound", weight:75 },
+  {
+    finding: "Jaundice",
+    weight: 90
+  },
 
-      { finding:"Liver fat accumulation on cytology", weight:90 }
+  {
+    finding: "Elevated bilirubin",
+    weight: 85
+  },
 
-    ],
+  {
+    finding: "Increased liver echogenicity",
+    weight: 75
+  },
 
-    against:[
+  {
+    finding: "Liver fat accumulation",
+    weight: 100
+  }
 
-      { finding:"Normal liver evaluation", weight:-40 },
+],
 
-      { finding:"No history of appetite loss", weight:-35 },
+    against: [
 
-      { finding:"Alternative liver disease confirmed", weight:-50 }
+  {
+    finding: "Normal bilirubin",
+    weight: -40
+  },
 
-    ],
+  {
+    finding: "Normal liver enzymes",
+    weight: -35
+  },
+
+  {
+    finding: "No anorexia",
+    weight: -60
+  },
+
+  {
+    finding: "Alternative liver disease confirmed",
+    weight: -70
+  }
+
+],
 
   },
 
@@ -302,44 +350,55 @@ export const felineHepaticLipidosis: DiseaseCard = {
 
   strengtheningEvidence:[
 
-    "Anorexia history",
+"Prolonged anorexia",
 
-    "Rapid weight loss",
+"Rapid weight loss",
 
-    "Jaundice",
+"Jaundice",
 
-    "Liver fat accumulation"
+"Elevated bilirubin",
 
-  ],
+"Increased liver echogenicity",
+
+"Liver fat accumulation"
+
+],
 
   weakeningEvidence:[
 
-    "No appetite loss",
+"No anorexia",
 
-    "Normal liver evaluation",
+"Normal bilirubin",
 
-    "Alternative diagnosis confirmed"
+"Normal liver enzymes",
 
-  ],
+"Alternative diagnosis confirmed"
+
+],
 
   classicFindings:[
 
-    "Anorexia",
+"prolonged anorexia",
 
-    "Jaundice",
+"rapid weight loss",
 
-    "Weight loss",
+"jaundice",
 
-    "Obese cat with sudden illness"
+"obese cat"
 
-  ],
+],
   
   priorityFindings: [
-   "jaundice",
-   "anorexia",
-   "weight loss"
-],
 
+"prolonged anorexia",
+
+"rapid weight loss",
+
+"jaundice",
+
+"elevated bilirubin"
+
+],
   ruleOutFindings:[
 
     "Cholangitis",

@@ -39,8 +39,25 @@ Rules:
 
 - Generate a prioritized problem list.
 - Rank differential diagnoses by likelihood.
-- Use realistic confidence estimates.
-- Confidence values should not total 100%.
+Differential diagnosis generation is your primary responsibility.
+
+Do not simply select from VetDx candidates.
+
+Think like a veterinarian:
+- interpret signalment
+- interpret clinical findings
+- consider common diseases
+- consider dangerous diseases
+- consider diseases that must not be missed
+
+Generate your own ranked differential list.
+- Assign only a likelihood category for each differential diagnosis.
+- Use ONLY one of these values:
+  High
+  Moderate
+  Low
+  Very Low
+- Do not provide numerical confidence percentages.
 - Choose one triage status:
   Stable, Urgent, or Emergency.
 - Include supporting findings.
@@ -106,10 +123,15 @@ VetDx Disease Knowledge:
 
 ${knowledgeContext}
 
-VetDx Ranked Disease Candidates:
+VetDx Disease Knowledge Database:
 
-${diseaseContext}
+Use this only as supporting veterinary reference information.
 
+Do NOT treat the ranked candidates as the final diagnosis.
+
+Generate your own differential diagnosis using clinical reasoning.
+
+If a disease is not present in this context but clinically appropriate, you may still include it.
 
 Clinical Case:
 
@@ -137,37 +159,7 @@ function validateReport(
   );
 }
 
-function normalizeConfidence(report: AIClinicalReport) {
-  if (!report.differentials?.length) return report;
 
-  // sort by AI confidence first
-  const sorted = [...report.differentials].sort((a, b) => {
-    return (Number(b.confidence) || 0) - (Number(a.confidence) || 0);
-  });
-
-  const base = 92;
-  const step = 14;
-
-  report.differentials = sorted.map((d, index) => {
-    let confidence = Number(d.confidence);
-
-    if (!isFinite(confidence)) {
-      confidence = base - index * step;
-    }
-
-    // FORCE separation even if AI gives similar values
-    confidence = base - index * step;
-
-    confidence = Math.max(5, Math.min(95, confidence));
-
-    return {
-      ...d,
-      confidence,
-    };
-  });
-
-  return report;
-}
 
 export async function POST(req: Request) {
   try {
@@ -184,29 +176,37 @@ export async function POST(req: Request) {
 
 
     const rankedDiseases =
-      rankDiseases(
-        JSON.stringify(body)
-      )
-      .slice(0, 10);
+  rankDiseases(
+    JSON.stringify(body)
+  )
+  .slice(0, 50);
 
 
     const diseaseContext =
   rankedDiseases
     .map(
-      (item, index) => {
+      (item) => {
 
-       const evidence =
-  item.matchedEvidence
-    .map(
-      (e) =>
-        `${e.finding} (${e.weight >= 0 ? "+" : ""}${e.weight})`
-    )
-    .join(", ");
+        const evidence =
+          item.matchedEvidence
+            .map(
+              (e:any) =>
+                `${e.finding} (${e.weight >= 0 ? "+" : ""}${e.weight})`
+            )
+            .join(", ");
 
         return `
-${index + 1}. ${item.disease.title}
-Score: ${item.score}
-Matched Evidence: ${evidence}
+Disease:
+${item.disease.title}
+
+Classic Findings:
+${item.disease.classicFindings?.join(", ")}
+
+Supporting Evidence:
+${evidence}
+
+Rule Out Findings:
+${item.disease.ruleOutFindings?.join(", ")}
 `;
       }
     )
@@ -277,8 +277,7 @@ Matched Evidence: ${evidence}
           );
         }
 
-        report =
-          normalizeConfidence(parsed);
+        report = parsed;
           report.source = "ai";
 
         break;
@@ -299,14 +298,11 @@ Matched Evidence: ${evidence}
     }
 
    if (!report) {
-  console.warn(
-    "Primary AI unavailable. Using VetDx fallback report."
+
+  throw new Error(
+    "Gemini clinical reasoning failed after multiple attempts."
   );
 
-  report = generateFallbackReport(
-    body,
-    rankedDiseases
-  );
 }
 
     report.problemList = Array.isArray(

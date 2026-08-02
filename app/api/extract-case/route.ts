@@ -152,9 +152,7 @@ function removeEmptyFields(value: any): any {
       );
 
 
-    return cleanedArray.length > 0
-      ? cleanedArray
-      : undefined;
+    return cleanedArray;
   }
 
 
@@ -216,7 +214,19 @@ function validateExtractedCase(data: any) {
 
 }
 
-
+function filterNonEmptyEntries(
+  entries: [string, any][]
+) {
+  return Object.fromEntries(
+    entries.filter(
+      ([_, value]) =>
+        value !== "" &&
+        value !== undefined &&
+        value !== null &&
+        !(Array.isArray(value) && value.length === 0)
+    )
+  );
+}
 
 export async function POST(req: Request) {
 
@@ -224,9 +234,7 @@ export async function POST(req: Request) {
 
   try {
 
-    ({ notes } = await req.json());
-
-    const fallbackTest = generateFallbackExtraction(notes);
+   ({ notes } = await req.json());
 
 
 
@@ -333,53 +341,101 @@ const fallbackCase =
 const finalCase = {
 
   patient: {
-    ...(cleanedCase.patient ?? {}),
-    ...Object.fromEntries(
-      Object.entries(fallbackCase.patient)
-        .filter(
-          ([_, value]) => value !== ""
-        )
-    ),
-  },
+  ...filterNonEmptyEntries(
+    Object.entries(fallbackCase.patient)
+  ),
+  ...(cleanedCase.patient ?? {}),
+},
 
 
   history: {
-    ...(cleanedCase.history ?? {}),
-    ...Object.fromEntries(
-      Object.entries(fallbackCase.history)
-        .filter(
-          ([_, value]) => value !== ""
-        )
-    ),
-  },
+  ...filterNonEmptyEntries(
+    Object.entries(fallbackCase.history)
+  ),
+  ...(cleanedCase.history ?? {}),
+},
 
 
   clinicalSigns: {
-    ...fallbackCase.clinicalSigns,
-    ...(cleanedCase.clinicalSigns ?? {}),
-  },
+  general: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.general ?? []),
+      ...(cleanedCase.clinicalSigns?.general ?? [])
+    ])
+  ],
+
+  gastrointestinal: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.gastrointestinal ?? []),
+      ...(cleanedCase.clinicalSigns?.gastrointestinal ?? [])
+    ])
+  ],
+
+  respiratory: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.respiratory ?? []),
+      ...(cleanedCase.clinicalSigns?.respiratory ?? [])
+    ])
+  ],
+
+  cardiovascular: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.cardiovascular ?? []),
+      ...(cleanedCase.clinicalSigns?.cardiovascular ?? [])
+    ])
+  ],
+
+  urinary: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.urinary ?? []),
+      ...(cleanedCase.clinicalSigns?.urinary ?? [])
+    ])
+  ],
+
+  neurological: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.neurological ?? []),
+      ...(cleanedCase.clinicalSigns?.neurological ?? [])
+    ])
+  ],
+
+  musculoskeletal: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.musculoskeletal ?? []),
+      ...(cleanedCase.clinicalSigns?.musculoskeletal ?? [])
+    ])
+  ],
+
+  dermatology: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.dermatology ?? []),
+      ...(cleanedCase.clinicalSigns?.dermatology ?? [])
+    ])
+  ],
+
+  reproductive: [
+    ...new Set([
+      ...(fallbackCase.clinicalSigns.reproductive ?? []),
+      ...(cleanedCase.clinicalSigns?.reproductive ?? [])
+    ])
+  ],
+},
 
 
   physicalExam: {
-    ...(cleanedCase.physicalExam ?? {}),
-    ...Object.fromEntries(
-      Object.entries(fallbackCase.physicalExam)
-        .filter(
-          ([_, value]) => value !== ""
-        )
-    ),
-  },
+  ...filterNonEmptyEntries(
+    Object.entries(fallbackCase.physicalExam)
+  ),
+  ...(cleanedCase.physicalExam ?? {}),
+},
 
 
-  diagnostics: {
-    ...(cleanedCase.diagnostics ?? {}),
-    ...Object.fromEntries(
-      Object.entries(fallbackCase.diagnostics)
-        .filter(
-          ([_, value]) => value !== ""
-        )
-    ),
-  },
+ diagnostics: {
+  ...filterNonEmptyEntries(
+    Object.entries(fallbackCase.diagnostics)
+  ),
+  ...(cleanedCase.diagnostics ?? {}),
+},
 
 };
 
