@@ -6,7 +6,7 @@ import Card from "../ui/Card";
 type DifferentialDiagnosisCardProps = {
   rank: number;
   name: string;
-  confidence: number;
+  likelihood?: string;
 
   reasons: string[];
 
@@ -24,55 +24,13 @@ type DifferentialDiagnosisCardProps = {
 };
 
 
-function getLikelihood(confidence: number) {
-
-  if (confidence >= 90) {
-    return {
-      label: "Very High",
-      color: "bg-green-600",
-    };
-  }
-
-
-  if (confidence >= 75) {
-    return {
-      label: "High",
-      color: "bg-green-500",
-    };
-  }
-
-
-  if (confidence >= 60) {
-    return {
-      label: "Moderate",
-      color: "bg-yellow-500",
-    };
-  }
-
-
-  if (confidence >= 45) {
-    return {
-      label: "Low",
-      color: "bg-orange-500",
-    };
-  }
-
-
-  return {
-    label: "Very Low",
-    color: "bg-red-500",
-  };
-
-}
-
 
 
 export default function DifferentialDiagnosisCard({
 
   rank,
   name,
-  confidence,
-
+  likelihood = "Moderate",
   reasons = [],
 
   supportingFindings = [],
@@ -89,10 +47,13 @@ export default function DifferentialDiagnosisCard({
 
 }: DifferentialDiagnosisCardProps) {
 
-
-  const likelihood =
-    getLikelihood(confidence);
-
+const badgeColor = {
+  "Very High": "bg-green-600",
+  High: "bg-green-500",
+  Moderate: "bg-yellow-500",
+  Low: "bg-orange-500",
+  "Very Low": "bg-red-500",
+}[likelihood] ?? "bg-yellow-500";
 
 
   return (
@@ -129,43 +90,10 @@ export default function DifferentialDiagnosisCard({
 
 
             <span
-              className={`inline-block rounded-full px-4 py-2 font-bold text-white ${likelihood.color}`}
+              className={`inline-block rounded-full px-4 py-2 font-bold text-white ${badgeColor}`}
             >
-              {likelihood.label}
+              {likelihood}
             </span>
-
-          </div>
-
-        </div>
-
-
-
-        {/* Confidence bar */}
-
-        <div>
-
-          <div className="mb-2 flex justify-between text-sm text-slate-400">
-
-            <span>
-              Likelihood
-            </span>
-
-
-            <span>
-              {confidence}%
-            </span>
-
-          </div>
-
-
-          <div className="h-3 overflow-hidden rounded-full bg-slate-700">
-
-            <div
-              className={`${likelihood.color} h-full transition-all duration-500`}
-              style={{
-                width: `${confidence}%`,
-              }}
-            />
 
           </div>
 

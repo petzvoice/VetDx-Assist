@@ -19,6 +19,8 @@ export interface DifferentialDiagnosis {
 
   confidence: number;
 
+  likelihood?: string;
+
   reasoning: string[];
 
   supportingFindings: string[];

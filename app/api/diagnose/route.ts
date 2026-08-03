@@ -4,7 +4,7 @@ import type { AIClinicalReport } from "@/types/ai";
 import { buildKnowledgeContext } from "@/lib/knowledge-engine/context";
 import { rankDiseases } from "@/lib/knowledge-engine/rankDiseases";
 import { drugs } from "@/lib/drugs/data";
-import { generateFallbackReport } from "@/lib/knowledge-engine/generateFallbackReport";
+
 
 
 const ai = new GoogleGenAI({
@@ -53,10 +53,14 @@ Think like a veterinarian:
 Generate your own ranked differential list.
 - Assign only a likelihood category for each differential diagnosis.
 - Use ONLY one of these values:
-  High
-  Moderate
-  Low
-  Very Low
+
+Very High
+High
+Moderate
+Low
+Very Low
+
+The first (most likely) differential diagnosis MUST always be "Very High" unless the case information is clearly insufficient.
 - Do not provide numerical confidence percentages.
 - Choose one triage status:
   Stable, Urgent, or Emergency.
@@ -123,15 +127,25 @@ VetDx Disease Knowledge:
 
 ${knowledgeContext}
 
-VetDx Disease Knowledge Database:
+Supporting Disease Reference (VetDx Knowledge)
 
-Use this only as supporting veterinary reference information.
+${diseaseContext}
 
-Do NOT treat the ranked candidates as the final diagnosis.
+IMPORTANT:
 
-Generate your own differential diagnosis using clinical reasoning.
+The diseases above are ONLY reference material.
 
-If a disease is not present in this context but clinically appropriate, you may still include it.
+They are NOT the diagnosis.
+
+Do NOT rank them because they appear above.
+
+Use your own veterinary clinical reasoning.
+
+Generate your own differential diagnosis from the clinical case.
+
+If another disease is more appropriate than any listed above, include it.
+
+If none of the listed diseases fit, ignore them.
 
 Clinical Case:
 
@@ -478,8 +492,8 @@ Array.isArray(report.differentials)
         item.problem ??
         "General",
 
-      confidence:
-        Number(diag.confidence) || 50,
+      likelihood:
+  diag.likelihood ?? "Moderate",
 
       reasoning: [],
 
@@ -507,9 +521,8 @@ Array.isArray(report.differentials)
         category:
           "General",
 
-        confidence:
-          Number(item.confidence) || 50,
-
+        likelihood:
+  item.likelihood ?? "Moderate",
         reasoning: [],
 
         supportingFindings:
@@ -529,50 +542,62 @@ Array.isArray(report.differentials)
 })
 
 : [];
-report.differentials =
-  report.differentials.map((diag:any)=>{
+report.differentials = report.differentials
+  .map((diag: any) => {
 
-    const diagnosisName =
-  diag.name.toLowerCase();
+    const diagnosisName = (diag.name ?? "").toLowerCase();
 
-const matchedDisease =
-  rankedDiseases.find((d) => {
+    const matchedDisease = rankedDiseases.find((d) => {
+      const diseaseName = d.disease.title.toLowerCase();
 
-    const diseaseName =
-      d.disease.title.toLowerCase();
-
-    return (
-      diagnosisName.includes(diseaseName) ||
-      diseaseName.includes(diagnosisName)
-    );
-  });
-
- 
+      return (
+        diagnosisName.includes(diseaseName) ||
+        diseaseName.includes(diagnosisName)
+      );
+    });
 
     return {
-  ...diag,
+      ...diag,
+      likelihood: diag.likelihood ?? "Moderate",
 
-  diseaseId: matchedDisease?.disease.id ?? null,
+      diseaseId: matchedDisease?.disease.id ?? null,
 
-  vetDxEvidence:
-    matchedDisease?.matchedEvidence?.map(
-      (e:any)=>e.finding
-    ) ?? [],
+      vetDxEvidence:
+        matchedDisease?.matchedEvidence?.map(
+          (e: any) => e.finding
+        ) ?? [],
 
-  classicFindings:
-    matchedDisease?.disease.classicFindings ?? [],
+      classicFindings:
+        matchedDisease?.disease.classicFindings ?? [],
 
-  strengtheningEvidence:
-    matchedDisease?.disease.strengtheningEvidence ?? [],
+      strengtheningEvidence:
+        matchedDisease?.disease.strengtheningEvidence ?? [],
 
-  weakeningEvidence:
-    matchedDisease?.disease.weakeningEvidence ?? [],
+      weakeningEvidence:
+        matchedDisease?.disease.weakeningEvidence ?? [],
 
-  ruleOutFindings:
-    matchedDisease?.disease.ruleOutFindings ?? [],
-};
+      ruleOutFindings:
+        matchedDisease?.disease.ruleOutFindings ?? [],
+    };
+  })
+  .sort((a, b) => {
+  const order = {
+    "Very High": 5,
+    High: 4,
+    Moderate: 3,
+    Low: 2,
+    "Very Low": 1,
+  };
 
-  });
+  const scoreA = order[a.likelihood as keyof typeof order] ?? 0;
+  const scoreB = order[b.likelihood as keyof typeof order] ?? 0;
+
+  if (scoreA !== scoreB) {
+    return scoreB - scoreA;
+  }
+
+  return 0; // preserve Gemini's original order when likelihood is equal
+});
 
 
 report.treatmentConsiderations = Array.isArray(

@@ -53,7 +53,7 @@ export default function AIClinicalReport({
   key={index}
   rank={index + 1}
   name={disease?.name ?? "Unknown"}
-  confidence={disease?.confidence ?? 50}
+  likelihood={disease?.likelihood ?? "Moderate"}
 
   reasons={
     Array.isArray(disease?.reasoning)
