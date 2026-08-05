@@ -1,6 +1,8 @@
 "use client";
 
 import Card from "../ui/Card";
+import Link from "next/link";
+import { findDisease } from "@/lib/diseases/findDisease";
 
 
 type DifferentialDiagnosisCardProps = {
@@ -55,6 +57,7 @@ const badgeColor = {
   "Very Low": "bg-red-500",
 }[likelihood] ?? "bg-yellow-500";
 
+const matchedDisease = findDisease(name);
 
   return (
 
@@ -69,9 +72,22 @@ const badgeColor = {
 
           <div>
 
-            <h2 className="text-2xl font-bold text-white">
-              {name}
-            </h2>
+            {matchedDisease ? (
+
+  <Link
+    href={`/diseases/${matchedDisease.id}`}
+    className="text-2xl font-bold text-cyan-400 hover:underline"
+  >
+    {matchedDisease.name}
+  </Link>
+
+) : (
+
+  <h2 className="text-2xl font-bold text-white">
+    {name}
+  </h2>
+
+)}
 
 
             <p className="text-slate-400">

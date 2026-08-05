@@ -12,6 +12,7 @@ const ai = new GoogleGenAI({
 });
 
 const MODEL = "gemini-2.5-flash";
+
 function buildPrompt(
   caseData: any,
   knowledgeContext: string,
@@ -233,17 +234,11 @@ ${item.disease.ruleOutFindings?.join(", ")}
   knowledgeContext,
   diseaseContext
 );
+let report: AIClinicalReport | null = null;
+    
+    
 
-    let report: AIClinicalReport | null =
-      null;
-
-    let lastError = "";
-
-    for (
-      let attempt = 1;
-      attempt <= 3;
-      attempt++
-    ) {
+    
       try {
         
         const response =
@@ -291,34 +286,18 @@ ${item.disease.ruleOutFindings?.join(", ")}
           );
         }
 
-        report = parsed;
-          report.source = "ai";
-
-        break;
+        report = parsed as AIClinicalReport;
+        report.source = "ai";
+        
       } catch (err: any) {
-        lastError = err.message;
-
-        console.error(
-  `[Gemini Failure Attempt ${attempt}]`,
-  err?.message
-);
-
-        if (attempt < 3) {
-          await new Promise((resolve) =>
-            setTimeout(resolve, 2000)
-          );
-        }
-      }
-    }
-
-   if (!report) {
-
-  throw new Error(
-    "Gemini clinical reasoning failed after multiple attempts."
-  );
-
+  console.error(err);
 }
-
+    
+if (!report) {
+  throw new Error(
+    "Gemini 2.5 Flash is currently unavailable. Please try again later."
+  );
+}
     report.problemList = Array.isArray(
       report.problemList
     )

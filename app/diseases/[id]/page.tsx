@@ -56,20 +56,23 @@ export default async function DiseaseDetailsPage({
 
       <div className="mt-3 text-gray-600 space-y-1">
 
-        <p>
-          Species: {disease.species.join(", ")}
-        </p>
+  <p>
+    Species: {disease.species.join(", ")}
+  </p>
 
-        <p>
-          Category: {disease.category}
-        </p>
+  {disease.category !== "Uncategorized" && (
+    <p>
+      Category: {disease.category}
+    </p>
+  )}
 
-        <p>
-          System: {disease.system}
-        </p>
+  {disease.system !== "General" && (
+    <p>
+      System: {disease.system}
+    </p>
+  )}
 
-      </div>
-
+</div>
 
 
       {/* Synonyms */}

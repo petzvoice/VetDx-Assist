@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import Button from "@/components/ui/Button";
 import ClinicalReportViewer from "@/components/report/ClinicalReportViewer";
 
@@ -26,6 +25,25 @@ export default function ClinicalAnalysisPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+  const savedReport = sessionStorage.getItem("vetdx-report");
+  const savedCase = sessionStorage.getItem("vetdx-case");
+  const savedNotes = sessionStorage.getItem("vetdx-notes");
+
+  if (savedReport) {
+    setReport(JSON.parse(savedReport));
+  }
+
+  if (savedCase) {
+    setStructuredCase(JSON.parse(savedCase));
+  }
+
+  if (savedNotes) {
+  setCaseNotes(savedNotes);
+}
+
+}, []);
+
   async function handleAnalyze() {
     if (!caseNotes.trim()) {
       alert("Please enter clinical notes.");
@@ -39,6 +57,9 @@ export default function ClinicalAnalysisPage() {
 
       setReport(null);
       setStructuredCase(null);
+      sessionStorage.removeItem("vetdx-report");
+      sessionStorage.removeItem("vetdx-case");
+      sessionStorage.removeItem("vetdx-notes");
 
       // STEP 1 - Extract structured case
       const extractionResponse = await fetch(
@@ -79,7 +100,23 @@ export default function ClinicalAnalysisPage() {
     
 
       setReport(aiReport);
-      setSaved(false);
+
+sessionStorage.setItem(
+  "vetdx-report",
+  JSON.stringify(aiReport)
+);
+
+sessionStorage.setItem(
+  "vetdx-case",
+  JSON.stringify(extraction.data)
+);
+
+sessionStorage.setItem(
+  "vetdx-notes",
+  caseNotes
+);
+
+setSaved(false);
 
     } catch (err: any) {
 
@@ -258,6 +295,10 @@ export default function ClinicalAnalysisPage() {
                 setSaved(false);
 
                 setSaving(false);
+
+                sessionStorage.removeItem("vetdx-report");
+                sessionStorage.removeItem("vetdx-case");
+                sessionStorage.removeItem("vetdx-notes");
 
               }}
             >
