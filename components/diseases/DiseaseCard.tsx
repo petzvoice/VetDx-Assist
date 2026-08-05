@@ -32,13 +32,17 @@ export default function DiseaseCard({
           Species: {disease.species.join(", ")}
         </p>
 
-        <p>
-          Category: {disease.category}
-        </p>
+        {disease.category !== "Uncategorized" && (
+          <p>
+            Category: {disease.category}
+          </p>
+        )}
 
-        <p>
-          System: {disease.system}
-        </p>
+        {disease.system !== "General" && (
+          <p>
+            System: {disease.system}
+          </p>
+        )}
 
       </div>
 
@@ -54,7 +58,6 @@ export default function DiseaseCard({
       >
         View Details →
       </Link>
-
 
     </div>
 
