@@ -75,7 +75,29 @@ export default function DashboardPage() {
 
 </div>
 
+<div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
 
+  <h2 className="text-xl font-semibold">
+    🦠 Disease Library
+  </h2>
+
+  <p className="mt-3 text-sm text-slate-400">
+    Browse 250+ veterinary diseases with clinical workflows, diagnostics, treatment approaches, monitoring, prognosis and differential diagnoses.
+  </p>
+
+  <div className="mt-6">
+
+    <Button
+      variant="secondary"
+      fullWidth
+      onClick={() => router.push("/diseases")}
+    >
+      Open Disease Library
+    </Button>
+
+  </div>
+
+</div>
 
           <div className="rounded-xl border border-slate-700 bg-slate-900 p-6">
 
