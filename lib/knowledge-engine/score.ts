@@ -182,7 +182,21 @@ export function scoreDisease(
   const evidence =
     disease.clinicalEvidence;
 
+let requiredFindings: string[] = [];
 
+if (disease.requiredFindings?.length) {
+  requiredFindings = disease.requiredFindings;
+} else {
+  requiredFindings = [
+    ...(evidence?.supports ?? [])
+      .filter(item => item.weight >= 70)
+      .map(item => item.finding),
+
+    ...(evidence?.imaging ?? [])
+      .filter(item => item.weight >= 65)
+      .map(item => item.finding),
+  ];
+}
 
   if (!evidence) {
 
@@ -429,11 +443,11 @@ if (!alreadyExists) {
   }
 
 
-if (disease.requiredFindings) {
+if (requiredFindings.length > 0) {
 
   let matchedRequired = 0;
 
-  for (const finding of disease.requiredFindings) {
+  for (const finding of requiredFindings) {
 
     if (contains(clinicalText, finding)) {
       matchedRequired++;
@@ -442,13 +456,13 @@ if (disease.requiredFindings) {
   }
 
   if (matchedRequired === 0) {
-    score -= 40;
+    return {
+      score: -1000,
+      matchedEvidence: [],
+    };
   }
 
 }
-
-
-
 
 
   /*

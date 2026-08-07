@@ -322,7 +322,11 @@ export const canineHemangiosarcoma: DiseaseCard = {
     "Alternative bleeding cause"
 
   ],
-
+  
+requiredFindings: [
+  "Splenic mass",
+  "Internal bleeding"
+],
   classicFindings:[
 
     "Sudden collapse",

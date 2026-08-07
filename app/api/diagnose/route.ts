@@ -1,8 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import type { AIClinicalReport } from "@/types/ai";
-import { buildKnowledgeContext } from "@/lib/knowledge-engine/context";
-import { rankDiseases } from "@/lib/knowledge-engine/rankDiseases";
 import { drugs } from "@/lib/drugs/data";
 
 
@@ -13,11 +11,7 @@ const ai = new GoogleGenAI({
 
 const MODEL = "gemini-2.5-flash";
 
-function buildPrompt(
-  caseData: any,
-  knowledgeContext: string,
-  diseaseContext: string
-) {
+function buildPrompt(caseData: any) {
   return `
 You are VetDx Assist.
 
@@ -36,22 +30,33 @@ Do not use markdown.
 Do not wrap JSON inside \`\`\`json blocks.
 Do not add explanations before or after JSON.
 
+CRITICAL DIFFERENTIAL DIAGNOSIS RULES
+
+- Generate only clinically plausible differential diagnoses.
+- Never invent diagnoses simply to fill the list.
+- Never repeat the same diagnosis.
+- Never generate diseases from another species.
+- Species-specific diseases must never appear outside their species.
+- Use standard veterinary disease names.
+- Only include diseases that explain the majority of:
+  • signalment
+  • history
+  • physical examination
+  • laboratory findings
+  • imaging findings
+- Maximum 5 differential diagnoses.
+- Minimum 1.
+- If fewer diagnoses are appropriate, return fewer.
+- Do not pad the list.
+- Return only diagnoses that a board-certified veterinary internist would seriously consider.
+
 Rules:
 
 - Generate a prioritized problem list.
 - Rank differential diagnoses by likelihood.
-Differential diagnosis generation is your primary responsibility.
-
-Do not simply select from VetDx candidates.
-
-Think like a veterinarian:
-- interpret signalment
-- interpret clinical findings
-- consider common diseases
-- consider dangerous diseases
-- consider diseases that must not be missed
-
-Generate your own ranked differential list.
+- Generate differentials using independent veterinary clinical reasoning.
+- Do not simply select from VetDx candidates.
+- Consider signalment, history, physical examination, laboratory findings, imaging findings, common diseases, dangerous diseases, and important rule-out diseases.
 - Assign only a likelihood category for each differential diagnosis.
 - Use ONLY one of these values:
 
@@ -73,7 +78,7 @@ The first (most likely) differential diagnosis MUST always be "Very High" unless
 
 Treatment Category Rules
 
-For every item in "treatmentConsiderations", the "category" field MUST be EXACTLY one of the following values:
+Each treatment recommendation MUST contain a "category" using EXACTLY one of these values:
 
 - Antibiotic
 - Antiemetic
@@ -88,13 +93,8 @@ For every item in "treatmentConsiderations", the "category" field MUST be EXACTL
 - Hepatoprotectant
 - Nutritional Support
 
-Rules:
-- Use EXACT spelling.
-- Do NOT invent new categories.
-- Do NOT pluralize category names.
-- Do NOT use synonyms.
-- Do NOT add extra words.
-- The "category" value must match one item from the list exactly.
+No other category names are allowed.
+
 - Prognosis MUST ALWAYS include:
   - shortTerm
   - longTerm
@@ -124,29 +124,7 @@ Return JSON with these fields:
   "clientSummary": ""
 }
 
-VetDx Disease Knowledge:
-
-${knowledgeContext}
-
-Supporting Disease Reference (VetDx Knowledge)
-
-${diseaseContext}
-
-IMPORTANT:
-
-The diseases above are ONLY reference material.
-
-They are NOT the diagnosis.
-
-Do NOT rank them because they appear above.
-
-Use your own veterinary clinical reasoning.
-
-Generate your own differential diagnosis from the clinical case.
-
-If another disease is more appropriate than any listed above, include it.
-
-If none of the listed diseases fit, ignore them.
+Use standard veterinary disease names whenever possible so the disease reference pages can be linked correctly.
 
 Clinical Case:
 
@@ -180,60 +158,8 @@ export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-   
 
-
-   
-    const knowledgeContext =
-      buildKnowledgeContext(
-        JSON.stringify(body)
-      );
-
-
-    const rankedDiseases =
-  rankDiseases(
-    JSON.stringify(body)
-  )
-  .slice(0, 50);
-
-
-    const diseaseContext =
-  rankedDiseases
-    .map(
-      (item) => {
-
-        const evidence =
-          item.matchedEvidence
-            .map(
-              (e:any) =>
-                `${e.finding} (${e.weight >= 0 ? "+" : ""}${e.weight})`
-            )
-            .join(", ");
-
-        return `
-Disease:
-${item.disease.title}
-
-Classic Findings:
-${item.disease.classicFindings?.join(", ")}
-
-Supporting Evidence:
-${evidence}
-
-Rule Out Findings:
-${item.disease.ruleOutFindings?.join(", ")}
-`;
-      }
-    )
-    .join("\n");
-
-
-
-   const prompt = buildPrompt(
-  body,
-  knowledgeContext,
-  diseaseContext
-);
+   const prompt = buildPrompt(body);
 let report: AIClinicalReport | null = null;
     
     
@@ -521,63 +447,43 @@ Array.isArray(report.differentials)
 })
 
 : [];
+const likelihoodOrder = {
+  "Very High": 5,
+  High: 4,
+  Moderate: 3,
+  Low: 2,
+  "Very Low": 1,
+};
+
 report.differentials = report.differentials
-  .map((diag: any) => {
-
-    const diagnosisName = (diag.name ?? "").toLowerCase();
-
-    const matchedDisease = rankedDiseases.find((d) => {
-      const diseaseName = d.disease.title.toLowerCase();
-
-      return (
-        diagnosisName.includes(diseaseName) ||
-        diseaseName.includes(diagnosisName)
-      );
-    });
-
-    return {
-      ...diag,
-      likelihood: diag.likelihood ?? "Moderate",
-
-      diseaseId: matchedDisease?.disease.id ?? null,
-
-      vetDxEvidence:
-        matchedDisease?.matchedEvidence?.map(
-          (e: any) => e.finding
-        ) ?? [],
-
-      classicFindings:
-        matchedDisease?.disease.classicFindings ?? [],
-
-      strengtheningEvidence:
-        matchedDisease?.disease.strengtheningEvidence ?? [],
-
-      weakeningEvidence:
-        matchedDisease?.disease.weakeningEvidence ?? [],
-
-      ruleOutFindings:
-        matchedDisease?.disease.ruleOutFindings ?? [],
-    };
-  })
+  .map((diag: any) => ({
+    ...diag,
+    likelihood: diag.likelihood ?? "Moderate",
+  }))
   .sort((a, b) => {
-  const order = {
-    "Very High": 5,
-    High: 4,
-    Moderate: 3,
-    Low: 2,
-    "Very Low": 1,
-  };
+    const scoreA =
+      likelihoodOrder[a.likelihood as keyof typeof likelihoodOrder] ?? 0;
 
-  const scoreA = order[a.likelihood as keyof typeof order] ?? 0;
-  const scoreB = order[b.likelihood as keyof typeof order] ?? 0;
+    const scoreB =
+      likelihoodOrder[b.likelihood as keyof typeof likelihoodOrder] ?? 0;
 
-  if (scoreA !== scoreB) {
     return scoreB - scoreA;
+  });
+
+// Remove duplicate diagnoses
+const seen = new Set<string>();
+
+report.differentials = report.differentials.filter((diag: any) => {
+  const key = diag.name.trim().toLowerCase();
+
+  if (seen.has(key)) {
+    return false;
   }
 
-  return 0; // preserve Gemini's original order when likelihood is equal
-});
+  seen.add(key);
 
+  return true;
+});
 
 report.treatmentConsiderations = Array.isArray(
   report.treatmentConsiderations
@@ -593,41 +499,9 @@ report.treatmentConsiderations = Array.isArray(
         };
       }
 
-     const primaryDisease = rankedDiseases.find(
-  (d) =>
-    d.disease.id ===
-    report.differentials[0]?.diseaseId
-);
-
-const linkedDrugs =
-  (primaryDisease?.disease.recommendedDrugs ?? [])
-    .filter(
-      (drug: any) => drug.category === item.category
-    )
-        .filter(
-  (drug: any, index: number, array: any[]) =>
-            array.findIndex(
-              (d) => d.drugId === drug.drugId
-            ) === index
-        )
-        .map((drug: any) => {
-
-          const drugData = drugs.find(
-            (d: any) => d.id === drug.drugId
-          );
-
-          return {
-            drugId: drug.drugId,
-            name: drugData?.genericName ?? drug.drugId,
-            category: drug.category,
-            priority: drug.priority,
-          };
-
-        });
-
       return {
         ...item,
-        linkedDrugs,
+        linkedDrugs: [],
       };
 
     })

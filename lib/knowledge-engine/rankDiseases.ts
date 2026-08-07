@@ -11,14 +11,24 @@ export function rankDiseases(
   const detectedSpecies =
     detectSpecies(clinicalText);
 
+    console.log("Detected Species:", detectedSpecies);
+
 
 
   return diseaseDatabase
+  .map((disease) => {
+    console.log(
+      disease.title,
+      disease.species
+    );
 
+    return disease;
+  })
 
     // Species filtering
     .filter((disease) => {
-
+    
+      
 
       // If species not detected,
       // allow all diseases
@@ -48,7 +58,12 @@ export function rankDiseases(
 
 
     .map((disease) => {
-
+    
+       console.log(
+    "After species filter:",
+    disease.title,
+    disease.species
+  );
 
       const result =
         scoreDisease(
