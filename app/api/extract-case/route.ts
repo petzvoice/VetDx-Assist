@@ -1,6 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { generateFallbackExtraction } from "@/lib/knowledge-engine/generateFallbackExtraction";
+
 
 const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
@@ -214,19 +214,6 @@ function validateExtractedCase(data: any) {
 
 }
 
-function filterNonEmptyEntries(
-  entries: [string, any][]
-) {
-  return Object.fromEntries(
-    entries.filter(
-      ([_, value]) =>
-        value !== "" &&
-        value !== undefined &&
-        value !== null &&
-        !(Array.isArray(value) && value.length === 0)
-    )
-  );
-}
 
 export async function POST(req: Request) {
 
@@ -330,126 +317,10 @@ export async function POST(req: Request) {
 
 
 
-    const cleanedCase =
-  removeEmptyFields(extracted) ?? {};
-
-
-const fallbackCase =
-  generateFallbackExtraction(notes ?? "");
-
-
-const finalCase = {
-
-  patient: {
-  ...filterNonEmptyEntries(
-    Object.entries(fallbackCase.patient)
-  ),
-  ...(cleanedCase.patient ?? {}),
-},
-
-
-  history: {
-  ...filterNonEmptyEntries(
-    Object.entries(fallbackCase.history)
-  ),
-  ...(cleanedCase.history ?? {}),
-},
-
-
-  clinicalSigns: {
-  general: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.general ?? []),
-      ...(cleanedCase.clinicalSigns?.general ?? [])
-    ])
-  ],
-
-  gastrointestinal: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.gastrointestinal ?? []),
-      ...(cleanedCase.clinicalSigns?.gastrointestinal ?? [])
-    ])
-  ],
-
-  respiratory: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.respiratory ?? []),
-      ...(cleanedCase.clinicalSigns?.respiratory ?? [])
-    ])
-  ],
-
-  cardiovascular: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.cardiovascular ?? []),
-      ...(cleanedCase.clinicalSigns?.cardiovascular ?? [])
-    ])
-  ],
-
-  urinary: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.urinary ?? []),
-      ...(cleanedCase.clinicalSigns?.urinary ?? [])
-    ])
-  ],
-
-  neurological: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.neurological ?? []),
-      ...(cleanedCase.clinicalSigns?.neurological ?? [])
-    ])
-  ],
-
-  musculoskeletal: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.musculoskeletal ?? []),
-      ...(cleanedCase.clinicalSigns?.musculoskeletal ?? [])
-    ])
-  ],
-
-  dermatology: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.dermatology ?? []),
-      ...(cleanedCase.clinicalSigns?.dermatology ?? [])
-    ])
-  ],
-
-  reproductive: [
-    ...new Set([
-      ...(fallbackCase.clinicalSigns.reproductive ?? []),
-      ...(cleanedCase.clinicalSigns?.reproductive ?? [])
-    ])
-  ],
-},
-
-
-  physicalExam: {
-  ...filterNonEmptyEntries(
-    Object.entries(fallbackCase.physicalExam)
-  ),
-  ...(cleanedCase.physicalExam ?? {}),
-},
-
-
- diagnostics: {
-  ...filterNonEmptyEntries(
-    Object.entries(fallbackCase.diagnostics)
-  ),
-  ...(cleanedCase.diagnostics ?? {}),
-},
-
-};
-
-
-
-
 return NextResponse.json({
-
   success: true,
-
-  data: finalCase,
-
+  data: extracted,
 });
-
 
   } catch (error: any) {
 
@@ -466,18 +337,17 @@ return NextResponse.json({
 
 
 
-    const fallbackCase = generateFallbackExtraction(
-  notes ?? ""
+   return NextResponse.json(
+  {
+    success: false,
+    message:
+      error?.message ??
+      "Failed to extract clinical information.",
+  },
+  {
+    status: 500,
+  }
 );
-
-console.warn(
-  "Primary extraction unavailable. Using VetDx extraction fallback."
-);
-
-return NextResponse.json({
-  success: true,
-  data: fallbackCase,
-});
   }
 
 }
