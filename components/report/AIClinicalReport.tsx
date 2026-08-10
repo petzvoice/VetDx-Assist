@@ -8,9 +8,6 @@ import ProblemListCard from "./ProblemListCard";
 import DifferentialDiagnosisCard from "./DifferentialDiagnosisCard";
 import RecommendedDiagnosticsCard from "./RecommendedDiagnosticsCard";
 import EmergencyFlagsCard from "./EmergencyFlagsCard";
-import StabilizationCard from "./StabilizationCard";
-import TreatmentConsiderationsCard from "./TreatmentConsiderationsCard";
-import MonitoringCard from "./MonitoringCard";
 import PrognosisCard from "./PrognosisCard";
 import ClientSummaryCard from "./ClientSummaryCard";
 
@@ -118,32 +115,7 @@ export default function AIClinicalReport({
         }
       />
 
-      <StabilizationCard
-        stabilization={
-          Array.isArray(report.stabilization)
-            ? report.stabilization
-            : []
-        }
-      />
-
-      <TreatmentConsiderationsCard
-        considerations={
-          Array.isArray(
-            report.treatmentConsiderations
-          )
-            ? report.treatmentConsiderations
-            : []
-        }
-      />
-
-      <MonitoringCard
-        monitoring={
-          Array.isArray(report.monitoring)
-            ? report.monitoring
-            : []
-        }
-      />
-
+      
       <PrognosisCard
         prognosis={
           report.prognosis ?? {
@@ -158,7 +130,60 @@ export default function AIClinicalReport({
           report.clientSummary ?? ""
         }
       />
+       {/* ======================================================
+          NOTES
+          Static UI information — NOT AI GENERATED
+          ====================================================== */}
+
+      <section className="rounded-xl border border-blue-200 bg-blue-50 p-5">
+        <h2 className="text-lg font-semibold text-blue-900">
+          📝 Notes
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-blue-800">
+          The differential diagnoses above provide clinical
+          considerations based on the information documented
+          in this case.
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-blue-800">
+          Click the relevant disease cards when available to
+          review more detailed information about the condition,
+          including clinical features, diagnostics, treatment,
+          and other disease-specific information.
+        </p>
+      </section>
+
+      {/* ======================================================
+          DISCLAIMER
+          Static UI information — NOT AI GENERATED
+          ====================================================== */}
+
+      <section className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+        <h2 className="text-lg font-semibold text-amber-900">
+          ⚠️ Clinical Decision-Support Disclaimer
+        </h2>
+
+        <p className="mt-2 text-sm leading-6 text-amber-800">
+          VetDx Assist is an educational and clinical
+          decision-support tool. The information provided by
+          this report is intended to support veterinary
+          clinical reasoning and does not replace professional
+          veterinary judgment, physical examination, diagnostic
+          testing, or clinical decision-making.
+        </p>
+
+        <p className="mt-2 text-sm leading-6 text-amber-800">
+          AI-generated assessments may contain errors or
+          omissions. All findings, differential diagnoses,
+          diagnostic recommendations, and clinical decisions
+          should be independently evaluated by a qualified
+          veterinary professional.
+        </p>
+      </section>
 
     </div>
   );
 }
+
+    

@@ -8,7 +8,6 @@ import { bovineBloat } from './bovine_bloat';
 import { bovineClostridialDiseases } from './bovine_clostridial_diseases';
 import { bovineCoccidiosis } from './bovine_coccidiosis';
 import { bovineDiaphragmaticHernia } from './bovine_diaphragmatic_hernia';
-import { bovineDisplacedAbomasum } from './bovine_displaced_abomasum';
 import { bovineDystocia } from './bovine_dystocia';
 import { bovineEarlyEmbryonicDeath } from './bovine_early_embryonic_death';
 import { bovineEndometritis } from './bovine_endometritis';
@@ -49,7 +48,6 @@ import { canineAcuteHemorrhagicDiarrheaSyndrome } from './canine_acute_hemorrhag
 import { canineAcuteKidneyInjury } from './canine_acute_kidney_injury';
 import { canineAcutePancreatitis } from './canine_acute_pancreatitis';
 import { canineAnteriorUveitis } from './canine_anterior_uveitis';
-import { canineAorticThromboembolism } from './canine_aortic_thromboembolism';
 import { canineArrhythmias } from './canine_arrhythmias';
 import { canineAsthma } from './canine_asthma';
 import { canineAtopicDermatitis } from './canine_atopic_dermatitis';
@@ -91,7 +89,6 @@ import { canineGiardiasis } from './canine_giardiasis';
 import { canineGlaucoma } from './canine_glaucoma';
 import { canineHeartwormDisease } from './canine_heartworm_disease';
 import { canineHemangiosarcoma } from './canine_hemangiosarcoma';
-import { canineHepaticEncephalopathy } from './canine_hepatic_encephalopathy';
 import { canineHistiocytoma } from './canine_histiocytoma';
 import { canineHookwormInfection } from './canine_hookworm_infection';
 import { canineHyperadrenocorticism } from './canine_hyperadrenocorticism';
@@ -261,7 +258,6 @@ export const diseases = [
   bovineClostridialDiseases,
   bovineCoccidiosis,
   bovineDiaphragmaticHernia,
-  bovineDisplacedAbomasum,
   bovineDystocia,
   bovineEarlyEmbryonicDeath,
   bovineEndometritis,
@@ -302,7 +298,6 @@ export const diseases = [
   canineAcuteKidneyInjury,
   canineAcutePancreatitis,
   canineAnteriorUveitis,
-  canineAorticThromboembolism,
   canineArrhythmias,
   canineAsthma,
   canineAtopicDermatitis,
@@ -344,7 +339,6 @@ export const diseases = [
   canineGlaucoma,
   canineHeartwormDisease,
   canineHemangiosarcoma,
-  canineHepaticEncephalopathy,
   canineHistiocytoma,
   canineHookwormInfection,
   canineHyperadrenocorticism,

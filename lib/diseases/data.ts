@@ -10,7 +10,6 @@ import { bovineBloat } from '@/lib/knowledge-engine/diseases/bovine_bloat';
 import { bovineClostridialDiseases } from '@/lib/knowledge-engine/diseases/bovine_clostridial_diseases';
 import { bovineCoccidiosis } from '@/lib/knowledge-engine/diseases/bovine_coccidiosis';
 import { bovineDiaphragmaticHernia } from '@/lib/knowledge-engine/diseases/bovine_diaphragmatic_hernia';
-import { bovineDisplacedAbomasum } from '@/lib/knowledge-engine/diseases/bovine_displaced_abomasum';
 import { bovineDystocia } from '@/lib/knowledge-engine/diseases/bovine_dystocia';
 import { bovineEarlyEmbryonicDeath } from '@/lib/knowledge-engine/diseases/bovine_early_embryonic_death';
 import { bovineEndometritis } from '@/lib/knowledge-engine/diseases/bovine_endometritis';
@@ -62,7 +61,6 @@ import { canineAcuteHemorrhagicDiarrheaSyndrome } from '@/lib/knowledge-engine/d
 import { canineAcuteKidneyInjury } from '@/lib/knowledge-engine/diseases/canine_acute_kidney_injury';
 import { canineAcutePancreatitis } from '@/lib/knowledge-engine/diseases/canine_acute_pancreatitis';
 import { canineAnteriorUveitis } from '@/lib/knowledge-engine/diseases/canine_anterior_uveitis';
-import { canineAorticThromboembolism } from '@/lib/knowledge-engine/diseases/canine_aortic_thromboembolism';
 import { canineArrhythmias } from '@/lib/knowledge-engine/diseases/canine_arrhythmias';
 import { canineAsthma } from '@/lib/knowledge-engine/diseases/canine_asthma';
 import { canineAtopicDermatitis } from '@/lib/knowledge-engine/diseases/canine_atopic_dermatitis';
@@ -104,7 +102,6 @@ import { canineGiardiasis } from '@/lib/knowledge-engine/diseases/canine_giardia
 import { canineGlaucoma } from '@/lib/knowledge-engine/diseases/canine_glaucoma';
 import { canineHeartwormDisease } from '@/lib/knowledge-engine/diseases/canine_heartworm_disease';
 import { canineHemangiosarcoma } from '@/lib/knowledge-engine/diseases/canine_hemangiosarcoma';
-import { canineHepaticEncephalopathy } from '@/lib/knowledge-engine/diseases/canine_hepatic_encephalopathy';
 import { canineHistiocytoma } from '@/lib/knowledge-engine/diseases/canine_histiocytoma';
 import { canineHookwormInfection } from '@/lib/knowledge-engine/diseases/canine_hookworm_infection';
 import { canineHyperadrenocorticism } from '@/lib/knowledge-engine/diseases/canine_hyperadrenocorticism';
@@ -263,7 +260,6 @@ export const diseases: DiseaseCard[] = [
   bovineClostridialDiseases,
   bovineCoccidiosis,
   bovineDiaphragmaticHernia,
-  bovineDisplacedAbomasum,
   bovineDystocia,
   bovineEarlyEmbryonicDeath,
   bovineEndometritis,
@@ -315,7 +311,6 @@ export const diseases: DiseaseCard[] = [
   canineAcuteKidneyInjury,
   canineAcutePancreatitis,
   canineAnteriorUveitis,
-  canineAorticThromboembolism,
   canineArrhythmias,
   canineAsthma,
   canineAtopicDermatitis,
@@ -357,7 +352,6 @@ export const diseases: DiseaseCard[] = [
   canineGlaucoma,
   canineHeartwormDisease,
   canineHemangiosarcoma,
-  canineHepaticEncephalopathy,
   canineHistiocytoma,
   canineHookwormInfection,
   canineHyperadrenocorticism,
