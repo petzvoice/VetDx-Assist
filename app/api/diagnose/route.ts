@@ -1,9 +1,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import type { AIClinicalReport } from "@/types/ai";
+
 import {
   resolveDiseaseCard,
   normalizeDiseaseName,
+  normalizeDiseaseSpecies,
 } from "@/lib/knowledge-engine/search";
 
 const ai = new GoogleGenAI({
@@ -14,11 +16,54 @@ const MODEL = "gemini-2.5-flash";
 
 /**
  * ============================================================
- * PROMPT
+ * ALLOWED VALUES
  * ============================================================
  */
 
-function buildPrompt(caseData: any) {
+const ALLOWED_LIKELIHOODS = [
+  "Very High",
+  "High",
+  "Moderate",
+  "Low",
+  "Very Low",
+] as const;
+
+const ALLOWED_PRIORITIES = [
+  "Essential",
+  "Recommended",
+  "Optional",
+] as const;
+
+const ALLOWED_TRIAGE = [
+  "Stable",
+  "Urgent",
+  "Emergency",
+] as const;
+
+type AllowedLikelihood =
+  (typeof ALLOWED_LIKELIHOODS)[number];
+
+type AllowedPriority =
+  (typeof ALLOWED_PRIORITIES)[number];
+
+type AllowedTriage =
+  (typeof ALLOWED_TRIAGE)[number];
+
+/**
+ * ============================================================
+ * PROMPT
+ * ============================================================
+ *
+ * IMPORTANT ARCHITECTURE
+ *
+ * Gemini is completely independent of the VetDx Assist
+ * disease-card database.
+ *
+ * Disease cards are attached ONLY after Gemini finishes
+ * clinical reasoning.
+ */
+
+function buildPrompt(caseData: unknown): string {
   return `
 You are VetDx Assist, an independent veterinary clinical
 decision-support system.
@@ -32,17 +77,23 @@ CORE ARCHITECTURE RULE
 You are completely independent of the VetDx Assist disease-card
 database.
 
-Do NOT search for, retrieve, rank, select, or depend on any
+DO NOT search for, retrieve, rank, select, or depend on any
 VetDx Assist disease card.
 
-Do NOT assume that a disease must exist in the VetDx Assist
+DO NOT assume that a disease must exist in the VetDx Assist
 database.
+
+DO NOT restrict your differentials to diseases present in the
+VetDx Assist database.
 
 Generate differentials entirely from veterinary clinical
 reasoning.
 
 The application will separately attempt to attach an existing
 disease card AFTER your clinical assessment is complete.
+
+A disease may be included as a differential even if VetDx Assist
+does not currently have a disease card for it.
 
 ==================================================
 1. CLINICAL REASONING
@@ -87,8 +138,6 @@ Identify the patient's species FIRST.
 
 Every differential MUST biologically occur in that species.
 
-Examples:
-
 Dog → canine diseases
 Cat → feline diseases
 Cattle → bovine diseases
@@ -99,28 +148,11 @@ Goat → caprine diseases
 NEVER return a disease that belongs exclusively to another
 species.
 
-For example, if the patient is a dog:
-
-INVALID:
-"Bovine Infectious Rhinotracheitis"
-
-INVALID:
-"Bovine Respiratory Disease"
-
-INVALID:
-"Caprine arthritis encephalitis"
-
-INVALID:
-"Ovine progressive pneumonia"
-
-Even if the reasoning underneath accidentally discusses a
-canine condition, the diagnosis name itself must be species-safe.
-
 ==================================================
 3. DIFFERENTIAL DIAGNOSES
 ==================================================
 
-Generate up to 5 differentials.
+Generate UP TO 5 clinically justified differentials.
 
 Return fewer if fewer are clinically justified.
 
@@ -134,10 +166,7 @@ Prioritize:
 
 Do not pad the list.
 
-Do not duplicate diagnoses.
-
-Do not include a disease merely because it is associated with
-another differential.
+Do not intentionally repeat the same diagnosis.
 
 Each differential must independently explain the documented
 findings.
@@ -149,25 +178,10 @@ DIAGNOSIS–REASONING CONSISTENCY
 The diagnosis name MUST match the disease discussed in its
 reasoning.
 
-INCORRECT:
+The differential name must represent the actual disease,
+condition, or intentionally considered complication.
 
-name:
-"Canine Aortic Thromboembolism"
-
-reasoning:
-"These findings are typical of dilated cardiomyopathy."
-
-CORRECT:
-
-name:
-"Canine Dilated Cardiomyopathy"
-
-reasoning:
-"These findings are compatible with dilated cardiomyopathy."
-
-Do not substitute a complication for the underlying disease
-unless the complication itself is intentionally being considered
-as a differential.
+Do not use a different disease in the reasoning.
 
 ==================================================
 LIKELIHOOD
@@ -187,24 +201,43 @@ supports the diagnosis.
 Do not assign "Very High" merely because a breed is predisposed.
 
 ==================================================
+DIFFERENTIAL FIELDS
+==================================================
+
+Every differential MUST contain:
+
+"name"
+"category"
+"likelihood"
+"confidence"
+"reasoning"
+"supportingFindings"
+"againstFindings"
+"recommendedTests"
+"initialTreatment"
+
+IMPORTANT:
+
+"confidence" must be a concise explanation of why the likelihood
+was assigned.
+
+"recommendedTests" must contain tests specifically useful for
+that differential.
+
+"initialTreatment" must NOT invent a treatment plan when the
+diagnosis is unconfirmed.
+
+If treatment is not appropriate before confirmation, state that
+supportive/stabilization treatment should be guided by the
+patient's documented status and further diagnostics.
+
+==================================================
 4. PROBLEM LIST
 ==================================================
 
 List ONLY documented clinical problems.
 
 Do NOT put unconfirmed diagnoses into the problem list.
-
-Correct:
-
-"Exercise intolerance"
-"Syncope during exercise"
-"Irregular cardiac rhythm"
-
-Incorrect:
-
-"Dilated cardiomyopathy"
-
-unless the case actually confirms it.
 
 ==================================================
 5. TRIAGE
@@ -220,12 +253,11 @@ Base triage ONLY on documented findings.
 
 Do not invent physiological instability.
 
-Syncope, collapse, severe dyspnea, cyanosis, seizures,
-severe bleeding, or other potentially life-threatening
-documented signs may justify Emergency.
+Potentially life-threatening documented signs may justify
+Emergency.
 
-If the case contains potentially serious signs but no evidence
-of immediate instability, use Urgent.
+Serious signs without documented immediate instability may
+justify Urgent.
 
 ==================================================
 6. DIAGNOSTICS
@@ -250,9 +282,8 @@ Every diagnostic must contain:
 "priority"
 "reason"
 
-
 ==================================================
-10. RED FLAGS
+7. RED FLAGS
 ==================================================
 
 List clinically relevant deterioration signs.
@@ -262,7 +293,7 @@ Do not use a generic emergency checklist.
 Red flags must relate to the actual clinical syndrome.
 
 ==================================================
-11. CLINICAL PEARLS
+8. CLINICAL PEARLS
 ==================================================
 
 Provide concise, case-specific clinical reasoning.
@@ -270,10 +301,10 @@ Provide concise, case-specific clinical reasoning.
 Do not provide unnecessary textbook information.
 
 ==================================================
-12. PROGNOSIS
+9. PROGNOSIS
 ==================================================
 
-Return exactly:
+Return:
 
 "prognosis": {
   "shortTerm": "",
@@ -285,7 +316,7 @@ Both values MUST be non-empty strings.
 If diagnosis is uncertain, prognosis must reflect that uncertainty.
 
 ==================================================
-13. CLIENT SUMMARY
+10. CLIENT SUMMARY
 ==================================================
 
 Write a short client-friendly explanation based ONLY on
@@ -296,9 +327,7 @@ Do not introduce unsupported diagnoses as confirmed facts.
 Use phrases such as:
 
 "may be associated with"
-
 "raises concern for"
-
 "needs further evaluation"
 
 when the diagnosis is not confirmed.
@@ -331,9 +360,12 @@ Return exactly this overall structure:
       "name": "",
       "category": "",
       "likelihood": "",
+      "confidence": "",
       "reasoning": [],
       "supportingFindings": [],
-      "againstFindings": []
+      "againstFindings": [],
+      "recommendedTests": [],
+      "initialTreatment": []
     }
   ],
 
@@ -345,8 +377,6 @@ Return exactly this overall structure:
       "reason": ""
     }
   ],
-
-
 
   "redFlags": [],
 
@@ -371,7 +401,7 @@ Before returning the JSON:
 3. Confirm every differential can explain the documented syndrome.
 4. Remove unrelated diseases.
 5. Remove wrong-species diseases.
-6. Remove duplicate diagnoses.
+6. Do not intentionally duplicate diagnoses.
 7. Maximum 5 differentials.
 8. Do not pad the list.
 9. Use only allowed likelihood values.
@@ -382,9 +412,12 @@ Before returning the JSON:
 14. Diagnosis name must match its reasoning.
 15. Do not claim an unconfirmed diagnosis is confirmed.
 16. Do not invent undocumented examination or diagnostic findings.
-17. Return VALID JSON ONLY.
-18. Do not use Markdown.
-19. Do not write anything before or after the JSON.
+17. Every differential must contain confidence.
+18. Every differential must contain recommendedTests.
+19. Every differential must contain initialTreatment.
+20. Return VALID JSON ONLY.
+21. Do not use Markdown.
+22. Do not write anything before or after the JSON.
 
 CLINICAL CASE:
 
@@ -412,14 +445,13 @@ function cleanResponse(text: string): string {
  * ============================================================
  */
 
-function parseJsonResponse(text: string): any {
+function parseJsonResponse(text: string): unknown {
   const cleaned = cleanResponse(text);
 
-  // First: response is already valid JSON.
   try {
     return JSON.parse(cleaned);
   } catch {
-    // Continue.
+    // Continue to JSON extraction.
   }
 
   const firstBrace = cleaned.indexOf("{");
@@ -479,12 +511,14 @@ function parseJsonResponse(text: string): any {
 
         try {
           return JSON.parse(jsonText);
-        } catch (error: any) {
+        } catch (error: unknown) {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Unknown JSON error";
+
           throw new Error(
-            `Gemini returned malformed JSON: ${
-              error?.message ??
-              "Unknown JSON error"
-            }`
+            `Gemini returned malformed JSON: ${message}`
           );
         }
       }
@@ -503,18 +537,271 @@ function parseJsonResponse(text: string): any {
  */
 
 function validateReport(
-  report: any
+  report: unknown
 ): report is AIClinicalReport {
+  if (
+    !report ||
+    typeof report !== "object"
+  ) {
+    return false;
+  }
+
+  const value =
+    report as Record<string, unknown>;
+
   return Boolean(
-    report &&
-      typeof report === "object" &&
-      report.patientSummary &&
-      typeof report.patientSummary === "object" &&
-      report.triage &&
-      typeof report.triage === "object" &&
-      Array.isArray(report.problemList) &&
-      Array.isArray(report.differentials)
+    value.patientSummary &&
+      typeof value.patientSummary ===
+        "object" &&
+      value.triage &&
+      typeof value.triage === "object" &&
+      Array.isArray(value.problemList) &&
+      Array.isArray(value.differentials)
   );
+}
+
+/**
+ * ============================================================
+ * HELPERS
+ * ============================================================
+ */
+
+function normalizeStringArray(
+  value: unknown
+): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item: unknown) => {
+      if (
+        typeof item === "string"
+      ) {
+        return item.trim();
+      }
+
+      if (
+        item &&
+        typeof item === "object"
+      ) {
+        const object =
+          item as Record<
+            string,
+            unknown
+          >;
+
+        return String(
+          object.test ??
+            object.name ??
+            object.description ??
+            object.reason ??
+            ""
+        ).trim();
+      }
+
+      return String(
+        item ?? ""
+      ).trim();
+    })
+    .filter(Boolean);
+}
+
+function normalizeLikelihood(
+  value: unknown
+): AllowedLikelihood {
+  const normalized =
+    String(
+      value ?? ""
+    ).trim();
+
+  if (
+    (
+      ALLOWED_LIKELIHOODS as readonly string[]
+    ).includes(normalized)
+  ) {
+    return normalized as AllowedLikelihood;
+  }
+
+  return "Moderate";
+}
+
+function normalizePriority(
+  value: unknown
+): AllowedPriority {
+  const normalized =
+    String(
+      value ?? ""
+    ).trim();
+
+  if (
+    (
+      ALLOWED_PRIORITIES as readonly string[]
+    ).includes(normalized)
+  ) {
+    return normalized as AllowedPriority;
+  }
+
+  return "Recommended";
+}
+
+function normalizeTriage(
+  value: unknown
+): AllowedTriage {
+  const normalized =
+    String(
+      value ?? ""
+    ).trim();
+
+  if (
+    (
+      ALLOWED_TRIAGE as readonly string[]
+    ).includes(normalized)
+  ) {
+    return normalized as AllowedTriage;
+  }
+
+  return "Stable";
+}
+
+function cleanString(
+  value: unknown,
+  fallback = ""
+): string {
+  const result =
+    String(
+      value ?? ""
+    ).trim();
+
+  return result || fallback;
+}
+
+/**
+ * ============================================================
+ * NORMALIZE DIFFERENTIAL
+ * ============================================================
+ *
+ * IMPORTANT:
+ *
+ * The incoming Gemini object is deliberately treated as
+ * unknown/legacy-compatible data.
+ *
+ * This prevents TypeScript errors such as:
+ *
+ * Property 'diagnosis' does not exist on type
+ * 'DifferentialDiagnosis'.
+ *
+ * After normalization, the object is shaped according to
+ * the current AIClinicalReport / DifferentialDiagnosis type.
+ */
+
+function normalizeDifferential(
+  raw: unknown
+): any | null {
+  if (
+    !raw ||
+    typeof raw !== "object"
+  ) {
+    return null;
+  }
+
+  const item =
+    raw as Record<
+      string,
+      unknown
+    >;
+
+  /**
+   * Current format:
+   *
+   * {
+   *   name: "...",
+   *   ...
+   * }
+   *
+   * Legacy format:
+   *
+   * {
+   *   diagnosis: "...",
+   *   ...
+   * }
+   */
+
+  const name = cleanString(
+    item.name ??
+      item.diagnosis ??
+      item.diagnosisName
+  );
+
+  if (!name) {
+    return null;
+  }
+
+  /**
+   * Legacy / alternative field support.
+   */
+
+  const reasoning =
+    normalizeStringArray(
+      item.reasoning
+    );
+
+  const supportingFindings =
+    normalizeStringArray(
+      item.supportingFindings ??
+        item.supporting ??
+        item.findingsSupporting
+    );
+
+  const againstFindings =
+    normalizeStringArray(
+      item.againstFindings ??
+        item.findingsAgainst ??
+        item.findings_against
+    );
+
+  const recommendedTests =
+    normalizeStringArray(
+      item.recommendedTests ??
+        item.recommendedDiagnostics ??
+        item.tests
+    );
+
+  const initialTreatment =
+    normalizeStringArray(
+      item.initialTreatment ??
+        item.initialTreatmentPlan ??
+        item.treatment
+    );
+
+  return {
+    name,
+
+    category: cleanString(
+      item.category,
+      "General"
+    ),
+
+    likelihood:
+      normalizeLikelihood(
+        item.likelihood
+      ),
+
+    confidence: cleanString(
+      item.confidence,
+      "Confidence is based on the documented clinical findings and remains subject to diagnostic confirmation."
+    ),
+
+    reasoning,
+
+    supportingFindings,
+
+    againstFindings,
+
+    recommendedTests,
+
+    initialTreatment,
+  };
 }
 
 /**
@@ -526,289 +813,333 @@ function validateReport(
 function normalizeReport(
   report: AIClinicalReport
 ): AIClinicalReport {
-  report.problemList = Array.isArray(
-    report.problemList
-  )
-    ? report.problemList
-        .map((problem: any) => {
-          if (typeof problem === "string") {
-            return problem.trim();
-          }
+  /**
+   * ----------------------------------------------------------
+   * Problem list
+   * ----------------------------------------------------------
+   */
 
-          return (
-            problem?.problem ??
-            problem?.description ??
-            ""
-          );
-        })
-        .filter(Boolean)
-    : [];
+  report.problemList =
+    Array.isArray(
+      report.problemList
+    )
+      ? report.problemList
+          .map(
+            (problem: unknown) => {
+              if (
+                typeof problem ===
+                "string"
+              ) {
+                return problem.trim();
+              }
+
+              if (
+                problem &&
+                typeof problem ===
+                  "object"
+              ) {
+                const item =
+                  problem as Record<
+                    string,
+                    unknown
+                  >;
+
+                return cleanString(
+                  item.problem ??
+                    item.description
+                );
+              }
+
+              return "";
+            }
+          )
+          .filter(Boolean)
+      : [];
+
+  /**
+   * ----------------------------------------------------------
+   * Recommended diagnostics
+   * ----------------------------------------------------------
+   */
 
   report.recommendedDiagnostics =
     Array.isArray(
       report.recommendedDiagnostics
     )
       ? report.recommendedDiagnostics.map(
-          (test: any, index: number) => ({
-            id:
-              test?.id ??
-              `diagnostic-${index + 1}`,
+          (
+            test: unknown,
+            index: number
+          ) => {
+            const item =
+              test &&
+              typeof test ===
+                "object"
+                ? (test as Record<
+                    string,
+                    unknown
+                  >)
+                : {};
 
-            test:
-              test?.test ??
-              test?.name ??
-              test?.diagnostic ??
-              "Diagnostic Test",
+            return {
+              id: cleanString(
+                item.id,
+                `diagnostic-${index + 1}`
+              ),
 
-            priority:
-              test?.priority ??
-              "Recommended",
+              test: cleanString(
+                item.test ??
+                  item.name ??
+                  item.diagnostic,
+                "Diagnostic Test"
+              ),
 
-            reason:
-              test?.reason ??
-              "",
-          })
-        )
-      : [];
+              priority:
+                normalizePriority(
+                  item.priority
+                ),
 
-
-
-  report.redFlags =
-    Array.isArray(report.redFlags)
-      ? report.redFlags
-          .map((item: any) =>
-            String(item ?? "").trim()
-          )
-          .filter(Boolean)
-      : [];
-
-  report.clinicalPearls =
-    Array.isArray(report.clinicalPearls)
-      ? report.clinicalPearls
-          .map((item: any) =>
-            String(item ?? "").trim()
-          )
-          .filter(Boolean)
-      : [];
-
-  report.clientSummary =
-    typeof report.clientSummary === "string"
-      ? report.clientSummary
-      : "";
-
-  report.patientSummary = {
-    species:
-      report.patientSummary?.species ?? "",
-
-    breed:
-      report.patientSummary?.breed ?? "",
-
-    age:
-      report.patientSummary?.age ?? "",
-
-    sex:
-      report.patientSummary?.sex ?? "",
-
-    weight:
-      report.patientSummary?.weight ?? "",
-
-    summary:
-      report.patientSummary?.summary ?? "",
-  };
-
-  report.triage = {
-    status:
-      report.triage?.status ??
-      "Stable",
-
-    reason:
-      report.triage?.reason ??
-      "",
-  };
-
-  const prognosis =
-    report.prognosis &&
-    typeof report.prognosis === "object"
-      ? report.prognosis
-      : {};
-
-  report.prognosis = {
-    shortTerm:
-      (prognosis as any).shortTerm ??
-      (prognosis as any).short_term ??
-      "Prognosis cannot be determined until further diagnostic evaluation.",
-
-    longTerm:
-      (prognosis as any).longTerm ??
-      (prognosis as any).long_term ??
-      "Long-term prognosis depends on the underlying diagnosis and response to treatment.",
-  };
-
-  /**
-   * Differential normalization.
-   */
-  report.differentials =
-    Array.isArray(report.differentials)
-      ? report.differentials.flatMap(
-          (item: any) => {
-            /**
-             * Normal format.
-             */
-            if (
-              item?.name &&
-              !item?.diagnosis &&
-              !item?.diagnoses
-            ) {
-              return [
-                {
-                  name:
-                    String(item.name).trim(),
-
-                  category:
-                    item.category ??
-                    "General",
-
-                  likelihood:
-                    item.likelihood ??
-                    "Moderate",
-
-                  reasoning:
-                    Array.isArray(
-                      item.reasoning
-                    )
-                      ? item.reasoning
-                      : [],
-
-                  supportingFindings:
-                    Array.isArray(
-                      item.supportingFindings
-                    )
-                      ? item.supportingFindings
-                      : [],
-
-                  againstFindings:
-                    Array.isArray(
-                      item.againstFindings
-                    )
-                      ? item.againstFindings
-                      : [],
-                },
-              ];
-            }
-
-            /**
-             * Legacy format.
-             */
-            if (
-              Array.isArray(
-                item?.diagnoses
-              )
-            ) {
-              return item.diagnoses.map(
-                (diagnosis: any) => ({
-                  name:
-                    diagnosis?.diagnosis ??
-                    "Unknown Diagnosis",
-
-                  category:
-                    item?.problem ??
-                    "General",
-
-                  likelihood:
-                    diagnosis?.likelihood ??
-                    "Moderate",
-
-                  reasoning:
-                    Array.isArray(
-                      diagnosis?.reasoning
-                    )
-                      ? diagnosis.reasoning
-                      : [],
-
-                  supportingFindings:
-                    Array.isArray(
-                      diagnosis?.supportingFindings
-                    )
-                      ? diagnosis.supportingFindings
-                      : [],
-
-                  againstFindings:
-                    Array.isArray(
-                      diagnosis?.findingsAgainst
-                    )
-                      ? diagnosis.findingsAgainst
-                      : [],
-                })
-              );
-            }
-
-            /**
-             * Alternative format.
-             */
-            if (item?.diagnosis) {
-              return [
-                {
-                  name:
-                    item.diagnosis,
-
-                  category:
-                    item.category ??
-                    "General",
-
-                  likelihood:
-                    item.likelihood ??
-                    "Moderate",
-
-                  reasoning:
-                    Array.isArray(
-                      item.reasoning
-                    )
-                      ? item.reasoning
-                      : [],
-
-                  supportingFindings:
-                    Array.isArray(
-                      item.supportingFindings
-                    )
-                      ? item.supportingFindings
-                      : [],
-
-                  againstFindings:
-                    Array.isArray(
-                      item.findingsAgainst
-                    )
-                      ? item.findingsAgainst
-                      : [],
-                },
-              ];
-            }
-
-            return [];
+              reason: cleanString(
+                item.reason
+              ),
+            };
           }
         )
       : [];
 
   /**
-   * Remove duplicate diagnoses.
+   * ----------------------------------------------------------
+   * Red flags
+   * ----------------------------------------------------------
    */
-  const seen = new Set<string>();
+
+  report.redFlags =
+    normalizeStringArray(
+      report.redFlags
+    );
+
+  /**
+   * ----------------------------------------------------------
+   * Clinical pearls
+   * ----------------------------------------------------------
+   */
+
+  report.clinicalPearls =
+    normalizeStringArray(
+      report.clinicalPearls
+    );
+
+  /**
+   * ----------------------------------------------------------
+   * Client summary
+   * ----------------------------------------------------------
+   */
+
+  report.clientSummary =
+    cleanString(
+      report.clientSummary
+    );
+
+  /**
+   * ----------------------------------------------------------
+   * Patient summary
+   * ----------------------------------------------------------
+   */
+
+  const patient =
+    report.patientSummary ??
+    ({} as any);
+
+  report.patientSummary = {
+    species: cleanString(
+      patient.species
+    ),
+
+    breed: cleanString(
+      patient.breed
+    ),
+
+    age: cleanString(
+      patient.age
+    ),
+
+    sex: cleanString(
+      patient.sex
+    ),
+
+    weight: cleanString(
+      patient.weight
+    ),
+
+    summary: cleanString(
+      patient.summary
+    ),
+  };
+
+  /**
+   * ----------------------------------------------------------
+   * Triage
+   * ----------------------------------------------------------
+   */
+
+  const triage =
+    report.triage ??
+    ({} as any);
+
+  report.triage = {
+    status:
+      normalizeTriage(
+        triage.status
+      ),
+
+    reason: cleanString(
+      triage.reason
+    ),
+  };
+
+  /**
+   * ----------------------------------------------------------
+   * Prognosis
+   * ----------------------------------------------------------
+   */
+
+  const prognosis =
+    report.prognosis &&
+    typeof report.prognosis ===
+      "object"
+      ? (report.prognosis as any)
+      : {};
+
+  report.prognosis = {
+    shortTerm: cleanString(
+      prognosis.shortTerm ??
+        prognosis.short_term,
+      "Prognosis cannot be determined until further diagnostic evaluation."
+    ),
+
+    longTerm: cleanString(
+      prognosis.longTerm ??
+        prognosis.long_term,
+      "Long-term prognosis depends on the underlying diagnosis and response to treatment."
+    ),
+  };
+
+  /**
+   * ----------------------------------------------------------
+   * DIFFERENTIAL NORMALIZATION
+   * ----------------------------------------------------------
+   *
+   * This deliberately uses unknown input rather than assuming
+   * Gemini's raw object already matches DifferentialDiagnosis.
+   *
+   * Therefore legacy "diagnosis" is safely supported without
+   * TypeScript errors.
+   */
+
+  const rawDifferentials =
+    Array.isArray(
+      report.differentials
+    )
+      ? report.differentials
+      : [];
+
+  const normalizedDifferentials: any[] =
+    [];
+
+  for (
+    const rawItem of rawDifferentials
+  ) {
+    /**
+     * Handle legacy wrapper:
+     *
+     * {
+     *   diagnoses: [...]
+     * }
+     */
+
+    if (
+      rawItem &&
+      typeof rawItem ===
+        "object" &&
+      Array.isArray(
+        (rawItem as any)
+          .diagnoses
+      )
+    ) {
+      const wrapper =
+        rawItem as any;
+
+      for (
+        const legacyDiagnosis of
+          wrapper.diagnoses
+      ) {
+        const normalized =
+          normalizeDifferential(
+            {
+              ...legacyDiagnosis,
+              category:
+                legacyDiagnosis?.category ??
+                wrapper.category ??
+                wrapper.problem,
+            }
+          );
+
+        if (normalized) {
+          normalizedDifferentials.push(
+            normalized
+          );
+        }
+      }
+
+      continue;
+    }
+
+    /**
+     * Handle current and legacy
+     * single-diagnosis objects.
+     */
+
+    const normalized =
+      normalizeDifferential(
+        rawItem
+      );
+
+    if (normalized) {
+      normalizedDifferentials.push(
+        normalized
+      );
+    }
+  }
+
+  /**
+   * ----------------------------------------------------------
+   * Remove duplicates
+   * ----------------------------------------------------------
+   */
+
+  const seen =
+    new Set<string>();
 
   report.differentials =
-    report.differentials.filter(
+    normalizedDifferentials.filter(
       (diagnosis: any) => {
         const name =
-          String(
-            diagnosis?.name ?? ""
-          ).trim();
+          cleanString(
+            diagnosis?.name
+          );
 
         if (!name) {
           return false;
         }
 
         const key =
-          normalizeDiseaseName(name);
+          normalizeDiseaseName(
+            name
+          );
 
-        if (seen.has(key)) {
+        if (
+          seen.has(key)
+        ) {
           return false;
         }
 
@@ -816,9 +1147,7 @@ function normalizeReport(
 
         return true;
       }
-    );
-
- 
+    ) as any;
 
   return report;
 }
@@ -828,19 +1157,20 @@ function normalizeReport(
  * SPECIES SAFETY
  * ============================================================
  *
- * This is a BACKEND safety layer.
+ * IMPORTANT:
  *
- * It does not generate diagnoses.
- * It only removes obviously invalid diagnoses.
- * ============================================================
+ * This function does NOT use the disease database.
+ *
+ * It only removes obviously wrong-species diagnoses.
  */
 
 function validateDifferentials(
   report: AIClinicalReport
 ): AIClinicalReport {
   const species =
-    String(
-      report.patientSummary?.species ?? ""
+    cleanString(
+      report.patientSummary
+        ?.species
     )
       .toLowerCase()
       .trim();
@@ -867,9 +1197,10 @@ function validateDifferentials(
       : species;
 
   /**
-   * Explicit species words that are forbidden
-   * for each patient species.
+   * Explicit species terms that are invalid
+   * for the patient's species.
    */
+
   const forbiddenTerms: Record<
     string,
     string[]
@@ -983,13 +1314,9 @@ function validateDifferentials(
     ] ?? [];
 
   /**
-   * Additional disease-specific wrong-species
-   * patterns.
-   *
-   * These catch diseases where the diagnosis name
-   * does not necessarily contain "bovine", "canine",
-   * etc.
+   * Disease-specific patterns.
    */
+
   const speciesSpecificPatterns: Record<
     string,
     RegExp[]
@@ -1008,8 +1335,8 @@ function validateDifferentials(
     feline: [
       /\bbovine\s+viral\s+diarrhea\b/i,
       /\binfectious\s+rhinotracheitis\b/i,
-      /\bovine\s+respiratory\s+disease\b/i,
-      /\bovine\s+progressive\s+pneumonia\b/i,
+      /\bbovine\s+respiratory\s+disease\b/i,
+      /\bbovine\s+progressive\s+pneumonia\b/i,
       /\bcaprine\s+arthritis\b/i,
     ],
 
@@ -1044,9 +1371,6 @@ function validateDifferentials(
       normalizedSpecies
     ] ?? [];
 
-  /**
-   * Escape regex terms safely.
-   */
   const escapeRegex = (
     value: string
   ) =>
@@ -1055,50 +1379,45 @@ function validateDifferentials(
       "\\$&"
     );
 
-  /**
-   * Determine whether a diagnosis is obviously
-   * wrong for the patient's species.
-   */
-  const isWrongSpeciesDiagnosis = (
-    name: string
-  ): boolean => {
-    const lowerName =
-      name.toLowerCase().trim();
+  const isWrongSpeciesDiagnosis =
+    (name: string): boolean => {
+      const lowerName =
+        name
+          .toLowerCase()
+          .trim();
 
-    /**
-     * Explicit forbidden species term.
-     */
-    if (
-      forbidden.some((term) =>
-        new RegExp(
-          `\\b${escapeRegex(
-            term
-          )}\\b`,
-          "i"
-        ).test(lowerName)
-      )
-    ) {
-      return true;
-    }
+      if (
+        forbidden.some(
+          (term) =>
+            new RegExp(
+              `\\b${escapeRegex(
+                term
+              )}\\b`,
+              "i"
+            ).test(
+              lowerName
+            )
+        )
+      ) {
+        return true;
+      }
 
-    /**
-     * Specific disease patterns.
-     */
-    if (
-      specificPatterns.some(
-        (pattern) =>
-          pattern.test(name)
-      )
-    ) {
-      return true;
-    }
+      if (
+        specificPatterns.some(
+          (pattern) =>
+            pattern.test(name)
+        )
+      ) {
+        return true;
+      }
 
-    return false;
-  };
+      return false;
+    };
 
   /**
-   * Remove wrong-species diagnoses.
+   * Remove obviously wrong-species diagnoses.
    */
+
   report.differentials =
     Array.isArray(
       report.differentials
@@ -1106,10 +1425,9 @@ function validateDifferentials(
       ? report.differentials.filter(
           (diagnosis: any) => {
             const name =
-              String(
-                diagnosis?.name ??
-                  ""
-              ).trim();
+              cleanString(
+                diagnosis?.name
+              );
 
             if (!name) {
               return false;
@@ -1135,6 +1453,7 @@ function validateDifferentials(
   /**
    * Maximum five.
    */
+
   report.differentials =
     report.differentials.slice(
       0,
@@ -1142,29 +1461,32 @@ function validateDifferentials(
     );
 
   /**
-   * Remove duplicates again.
+   * Final duplicate protection.
    */
-  const seen = new Set<string>();
+
+  const seen =
+    new Set<string>();
 
   report.differentials =
     report.differentials.filter(
       (diagnosis: any) => {
         const name =
-          String(
-            diagnosis?.name ??
-              ""
-          ).trim();
+          cleanString(
+            diagnosis?.name
+          );
+
+        if (!name) {
+          return false;
+        }
 
         const key =
           normalizeDiseaseName(
             name
           );
 
-        if (!key) {
-          return false;
-        }
-
-        if (seen.has(key)) {
+        if (
+          seen.has(key)
+        ) {
           return false;
         }
 
@@ -1172,7 +1494,7 @@ function validateDifferentials(
 
         return true;
       }
-    );
+    ) as any;
 
   return report;
 }
@@ -1182,25 +1504,41 @@ function validateDifferentials(
  * DISEASE CARD ATTACHMENT
  * ============================================================
  *
- * IMPORTANT:
+ * THIS IS THE ONLY PLACE WHERE THE DISEASE DATABASE
+ * PARTICIPATES IN THE AI REPORT.
  *
- * This happens AFTER AI diagnosis and validation.
- *
- * Disease cards do not generate or rank the diagnosis.
- * They are only linked when an existing card can be resolved.
- * ============================================================
+ * Gemini
+ *   ↓
+ * Independent clinical reasoning
+ *   ↓
+ * Normalization
+ *   ↓
+ * Species safety
+ *   ↓
+ * Disease-card lookup
+ *   ↓
+ * Card exists?
+ *      YES → attach diseaseCardId
+ *      NO  → keep AI diagnosis unchanged
  */
 
 function attachDiseaseCards(
   report: AIClinicalReport
 ): AIClinicalReport {
+  const patientSpecies =
+    normalizeDiseaseSpecies(
+      report.patientSummary
+        ?.species ?? ""
+    );
+
   report.differentials =
     report.differentials.map(
       (diagnosis: any) => {
         try {
           const diseaseCard =
             resolveDiseaseCard(
-              diagnosis.name
+              diagnosis.name,
+              patientSpecies
             );
 
           if (!diseaseCard) {
@@ -1214,14 +1552,14 @@ function attachDiseaseCards(
           };
         } catch (error) {
           console.warn(
-            `[VetDx Assist] Disease card lookup failed for "${diagnosis.name}".`,
+            `[VetDx Assist] Disease card lookup failed for "${diagnosis.name}" (${patientSpecies ?? "unknown species"}).`,
             error
           );
 
           return diagnosis;
         }
       }
-    );
+    ) as any;
 
   return report;
 }
@@ -1237,51 +1575,91 @@ export async function POST(
 ) {
   try {
     /**
-     * Parse request.
+     * --------------------------------------------------------
+     * 1. Parse clinical case
+     * --------------------------------------------------------
      */
+
     const caseData =
       await req.json();
 
-    /**
-     * Build independent AI prompt.
-     */
-    const prompt =
-      buildPrompt(caseData);
-
-    /**
-     * Ask Gemini for JSON.
-     */
-    const response =
-      await ai.models.generateContent({
-        model: MODEL,
-        contents: prompt,
-
-        config: {
-          responseMimeType:
-            "application/json",
+    if (
+      !caseData ||
+      typeof caseData !==
+        "object"
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "Invalid clinical case data.",
         },
-      });
+        {
+          status: 400,
+        }
+      );
+    }
+
+    /**
+     * --------------------------------------------------------
+     * 2. Build independent AI prompt
+     * --------------------------------------------------------
+     */
+
+    const prompt =
+      buildPrompt(
+        caseData
+      );
+
+    /**
+     * --------------------------------------------------------
+     * 3. Ask Gemini
+     * --------------------------------------------------------
+     *
+     * No disease database is passed to Gemini.
+     */
+
+    const response =
+      await ai.models.generateContent(
+        {
+          model: MODEL,
+          contents: prompt,
+
+          config: {
+            responseMimeType:
+              "application/json",
+          },
+        }
+      );
 
     const rawText =
       response.text ?? "";
 
-    if (!rawText.trim()) {
+    if (
+      !rawText.trim()
+    ) {
       throw new Error(
         "Gemini returned an empty response."
       );
     }
 
     /**
-     * Parse JSON safely.
+     * --------------------------------------------------------
+     * 4. Parse JSON safely
+     * --------------------------------------------------------
      */
+
     const parsed =
       parseJsonResponse(
         rawText
       );
 
     /**
-     * Validate basic structure.
+     * --------------------------------------------------------
+     * 5. Validate basic report structure
+     * --------------------------------------------------------
      */
+
     if (
       !validateReport(
         parsed
@@ -1296,39 +1674,56 @@ export async function POST(
       parsed as AIClinicalReport;
 
     /**
-     * Mark source.
+     * --------------------------------------------------------
+     * 6. Mark source
+     * --------------------------------------------------------
      */
+
     report.source = "ai";
 
     /**
-     * Normalize.
+     * --------------------------------------------------------
+     * 7. Normalize AI output
+     * --------------------------------------------------------
      */
+
     report =
       normalizeReport(
         report
       );
 
     /**
-     * Backend safety validation.
+     * --------------------------------------------------------
+     * 8. Backend species safety
+     * --------------------------------------------------------
      *
-     * This does NOT generate diagnoses.
+     * Does NOT consult diseaseDatabase.
      */
+
     report =
       validateDifferentials(
         report
       );
 
     /**
-     * Only now attach existing disease cards.
+     * --------------------------------------------------------
+     * 9. Attach existing disease cards
+     * --------------------------------------------------------
+     *
+     * This happens AFTER AI reasoning.
      */
+
     report =
       attachDiseaseCards(
         report
       );
 
     /**
-     * Return successful report.
+     * --------------------------------------------------------
+     * 10. Return report
+     * --------------------------------------------------------
      */
+
     return NextResponse.json(
       {
         success: true,
@@ -1338,19 +1733,26 @@ export async function POST(
         status: 200,
       }
     );
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(
       "========== DIAGNOSE API ERROR =========="
     );
 
-    console.error(
-      error?.message ??
-        "Unknown server error"
-    );
+    if (
+      error instanceof Error
+    ) {
+      console.error(
+        error.message
+      );
 
-    console.error(
-      error
-    );
+      console.error(
+        error.stack
+      );
+    } else {
+      console.error(
+        error
+      );
+    }
 
     console.error(
       "========================================="
@@ -1359,9 +1761,11 @@ export async function POST(
     return NextResponse.json(
       {
         success: false,
+
         message:
-          error?.message ??
-          "Unable to generate AI clinical report.",
+          error instanceof Error
+            ? error.message
+            : "Unable to generate AI clinical report.",
       },
       {
         status: 500,

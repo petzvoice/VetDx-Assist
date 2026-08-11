@@ -1,5 +1,6 @@
 import { diseaseDatabase } from "./database";
 import { DiseaseCard } from "./types";
+import { Species } from "@/lib/drugs/types";
 
 export function getDiseaseById(
   id: string
@@ -64,21 +65,87 @@ export function normalizeDiseaseName(
     .replace(/[()[\],.:/]/g, " ")
     .replace(/\s+/g, " ");
 }
+export function normalizeDiseaseSpecies(
+  value: string
+): Species | undefined {
+  const species =
+    String(value ?? "")
+      .toLowerCase()
+      .trim();
 
+  switch (species) {
+    case "dog":
+    case "canine":
+      return Species.DOG;
+
+    case "cat":
+    case "feline":
+      return Species.CAT;
+
+    case "horse":
+    case "equine":
+      return Species.HORSE;
+
+    case "cattle":
+    case "bovine":
+      return Species.CATTLE;
+
+    case "sheep":
+    case "ovine":
+      return Species.SHEEP;
+
+    case "goat":
+    case "caprine":
+      return Species.GOAT;
+
+    case "pig":
+    case "swine":
+    case "porcine":
+      return Species.PIG;
+
+    case "rabbit":
+      return Species.RABBIT;
+
+    case "guinea pig":
+      return Species.GUINEA_PIG;
+
+    case "ferret":
+      return Species.FERRET;
+
+    case "bird":
+    case "avian":
+    case "poultry":
+      return Species.BIRD;
+
+    case "exotic mammal":
+      return Species.EXOTIC_MAMMAL;
+
+    case "reptile":
+      return Species.REPTILE;
+
+    default:
+      return undefined;
+  }
+}
 /**
  * Resolve an AI-generated diagnosis to an existing
- * disease card.
+ * disease card that is compatible with the patient's species.
  *
  * IMPORTANT:
+ *
  * This runs AFTER AI diagnosis.
  *
  * The AI does NOT use this function to determine
  * its differential diagnoses.
  *
- * Returns undefined if there is no reliable match.
+ * Species filtering is ONLY used to decide whether
+ * an existing disease card may be attached.
+ *
+ * If no species-compatible card exists, returns undefined.
  */
 export function resolveDiseaseCard(
-  diagnosisName: string
+  diagnosisName: string,
+  patientSpecies?: Species
 ): DiseaseCard | undefined {
   const normalizedDiagnosis =
     normalizeDiseaseName(diagnosisName);
@@ -87,9 +154,24 @@ export function resolveDiseaseCard(
     return undefined;
   }
 
-  // 1. Exact disease-title match
+  /**
+   * If species is known, ONLY consider disease cards
+   * that are applicable to that species.
+   *
+   * This does NOT affect AI diagnosis.
+   * It only controls which knowledge card can be attached.
+   */
+  const candidateCards = patientSpecies
+    ? diseaseDatabase.filter((disease) =>
+        disease.species?.includes(patientSpecies)
+      )
+    : diseaseDatabase;
+
+  /**
+   * 1. Exact disease-title match
+   */
   const exactTitle =
-    diseaseDatabase.find(
+    candidateCards.find(
       (disease) =>
         normalizeDiseaseName(
           disease.title
@@ -100,9 +182,11 @@ export function resolveDiseaseCard(
     return exactTitle;
   }
 
-  // 2. Exact synonym match
+  /**
+   * 2. Exact synonym match
+   */
   const exactSynonym =
-    diseaseDatabase.find((disease) =>
+    candidateCards.find((disease) =>
       disease.synonyms?.some(
         (synonym) =>
           normalizeDiseaseName(
@@ -115,12 +199,14 @@ export function resolveDiseaseCard(
     return exactSynonym;
   }
 
-  // 3. Exact normalized ID match
+  /**
+   * 3. Exact normalized ID match
+   */
   const normalizedId =
     normalizedDiagnosis.replace(/\s+/g, "-");
 
   const exactId =
-    diseaseDatabase.find(
+    candidateCards.find(
       (disease) =>
         disease.id.toLowerCase() ===
         normalizedId
@@ -130,6 +216,11 @@ export function resolveDiseaseCard(
     return exactId;
   }
 
-  // No reliable disease-card match.
+  /**
+   * No reliable species-compatible card found.
+   *
+   * IMPORTANT:
+   * Do NOT force a card from another species.
+   */
   return undefined;
 }
