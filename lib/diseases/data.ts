@@ -23,6 +23,7 @@ import { bovineHypomagnesemia } from '@/lib/knowledge-engine/diseases/bovine_hyp
 import { bovineInfectiousRhinotracheitis } from '@/lib/knowledge-engine/diseases/bovine_infectious_rhinotracheitis';
 import { bovineJohnesDisease } from '@/lib/knowledge-engine/diseases/bovine_johnes_disease';
 import { bovineKetosis } from '@/lib/knowledge-engine/diseases/bovine_ketosis';
+import { bovineLeptospirosis } from '@/lib/knowledge-engine/diseases/bovine_leptospirosis';
 import { bovineLeadPoisoning } from '@/lib/knowledge-engine/diseases/bovine_lead_poisoning';
 import { bovineLumpySkinDisease } from '@/lib/knowledge-engine/diseases/bovine_lumpy_skin_disease';
 import { bovineMastitis } from '@/lib/knowledge-engine/diseases/bovine_mastitis';
@@ -273,6 +274,7 @@ export const diseases: DiseaseCard[] = [
   bovineInfectiousRhinotracheitis,
   bovineJohnesDisease,
   bovineKetosis,
+  bovineLeptospirosis,
   bovineLeadPoisoning,
   bovineLumpySkinDisease,
   bovineMastitis,

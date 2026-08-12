@@ -2,12 +2,13 @@
 
 import Card from "../ui/Card";
 import Link from "next/link";
-import { findDisease } from "@/lib/diseases/findDisease";
+import { diseaseLibrary } from "@/lib/diseases/library";
 
 
 type DifferentialDiagnosisCardProps = {
   rank: number;
   name: string;
+  diseaseCardId?: string | null;
   likelihood?: string;
 
   reasons: string[];
@@ -32,6 +33,7 @@ export default function DifferentialDiagnosisCard({
 
   rank,
   name,
+  diseaseCardId,
   likelihood = "Moderate",
   reasons = [],
 
@@ -57,7 +59,9 @@ const badgeColor = {
   "Very Low": "bg-red-500",
 }[likelihood] ?? "bg-yellow-500";
 
-const matchedDisease = findDisease(name);
+const matchedDisease = diseaseCardId
+  ? diseaseLibrary.find((d) => d.id === diseaseCardId)
+  : null;
 
   return (
 

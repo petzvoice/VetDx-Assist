@@ -21,6 +21,7 @@ import { bovineHypomagnesemia } from './bovine_hypomagnesemia';
 import { bovineInfectiousRhinotracheitis } from './bovine_infectious_rhinotracheitis';
 import { bovineJohnesDisease } from './bovine_johnes_disease';
 import { bovineKetosis } from './bovine_ketosis';
+import { bovineLeptospirosis } from "./bovine_leptospirosis";
 import { bovineLeadPoisoning } from './bovine_lead_poisoning';
 import { bovineLumpySkinDisease } from './bovine_lumpy_skin_disease';
 import { bovineMastitis } from './bovine_mastitis';
@@ -271,6 +272,7 @@ export const diseases = [
   bovineInfectiousRhinotracheitis,
   bovineJohnesDisease,
   bovineKetosis,
+  bovineLeptospirosis,
   bovineLeadPoisoning,
   bovineLumpySkinDisease,
   bovineMastitis,

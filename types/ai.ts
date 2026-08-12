@@ -40,7 +40,7 @@ export interface DifferentialDiagnosis {
         recommendation: string;
         details?: string;
       }[];
-diseaseId?: string | null;
+diseaseCardId?: string | null;
       vetDxEvidence?: string[];
       classicFindings?: string[];
 

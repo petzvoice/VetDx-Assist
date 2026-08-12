@@ -50,6 +50,7 @@ export default function AIClinicalReport({
   key={index}
   rank={index + 1}
   name={disease?.name ?? "Unknown"}
+  diseaseCardId={disease?.diseaseCardId}
   likelihood={disease?.likelihood ?? "Moderate"}
 
   reasons={
