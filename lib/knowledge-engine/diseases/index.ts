@@ -132,7 +132,6 @@ import { canineProstatitis } from './canine_prostatitis';
 import { canineProteinLosingEnteropathy } from './canine_protein_losing_enteropathy';
 import { caninePulmonaryEdema } from './canine_pulmonary_edema';
 import { caninePulmonaryThromboembolism } from './canine_pulmonary_thromboembolism';
-import { caninePulmonicStenosis } from './canine_pulmonic_stenosis';
 import { canineRabies } from './canine_rabies';
 import { canineRoundwormInfection } from './canine_roundworm_infection';
 import { canineSalmonellosis } from './canine_salmonellosis_bacterial_enteritis';
@@ -383,7 +382,6 @@ export const diseases = [
   canineProteinLosingEnteropathy,
   caninePulmonaryEdema,
   caninePulmonaryThromboembolism,
-  caninePulmonicStenosis,
   canineRabies,
   canineRoundwormInfection,
   canineSalmonellosis,

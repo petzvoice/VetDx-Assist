@@ -145,7 +145,6 @@ import { canineProstatitis } from '@/lib/knowledge-engine/diseases/canine_prosta
 import { canineProteinLosingEnteropathy } from '@/lib/knowledge-engine/diseases/canine_protein_losing_enteropathy';
 import { caninePulmonaryEdema } from '@/lib/knowledge-engine/diseases/canine_pulmonary_edema';
 import { caninePulmonaryThromboembolism } from '@/lib/knowledge-engine/diseases/canine_pulmonary_thromboembolism';
-import { caninePulmonicStenosis } from '@/lib/knowledge-engine/diseases/canine_pulmonic_stenosis';
 import { canineRabies } from '@/lib/knowledge-engine/diseases/canine_rabies';
 import { canineRoundwormInfection } from '@/lib/knowledge-engine/diseases/canine_roundworm_infection';
 import { canineSalmonellosis } from '@/lib/knowledge-engine/diseases/canine_salmonellosis_bacterial_enteritis';
@@ -396,7 +395,6 @@ export const diseases: DiseaseCard[] = [
   canineProteinLosingEnteropathy,
   caninePulmonaryEdema,
   caninePulmonaryThromboembolism,
-  caninePulmonicStenosis,
   canineRabies,
   canineRoundwormInfection,
   canineSalmonellosis,
