@@ -6,7 +6,172 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
 
-const MODEL = "gemini-2.5-flash";
+const PRIMARY_MODEL = "gemini-2.5-flash";
+
+const FALLBACK_MODELS = [
+  "gemini-2.5-flash-lite",
+  "gemini-3.1-flash-lite",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+  
+] as const;
+
+
+/**
+ * ============================================================
+ * GEMINI QUOTA ERROR DETECTION
+ * ============================================================
+ *
+ * Fallback models are used ONLY for quota/rate-limit errors.
+ *
+ * Do NOT fallback for:
+ * - malformed JSON
+ * - empty response
+ * - invalid extracted case
+ * - authentication errors
+ * - permission errors
+ * - bad request errors
+ * - application errors
+ */
+
+function isGeminiQuotaError(error: unknown): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const errorObject = error as {
+    status?: unknown;
+    code?: unknown;
+    message?: unknown;
+    error?: {
+      status?: unknown;
+      code?: unknown;
+      message?: unknown;
+    };
+  };
+
+  const status =
+    errorObject.status ??
+    errorObject.code ??
+    errorObject.error?.status ??
+    errorObject.error?.code;
+
+  if (
+    status === 429 ||
+    status === "429" ||
+    status === "RESOURCE_EXHAUSTED"
+  ) {
+    return true;
+  }
+
+  const message = String(
+    errorObject.message ??
+      errorObject.error?.message ??
+      error
+  ).toLowerCase();
+
+  return (
+    message.includes("resource exhausted") ||
+    message.includes("quota exceeded") ||
+    message.includes("rate limit exceeded") ||
+    message.includes("too many requests")
+  );
+}
+
+
+/**
+ * ============================================================
+ * GEMINI GENERATION WITH QUOTA-ONLY FALLBACK
+ * ============================================================
+ *
+ * Primary:
+ *   gemini-2.5-flash
+ *
+ * Fallback 1:
+ *   gemini-2.5-flash-lite
+ *
+ * Fallback 2:
+ *   gemini-3.1-flash-lite
+ *
+ * Fallback 3:
+ *   gemini-3.5-flash-lite
+ *
+ * Fallback 4:
+ *   gemini-3.5-flash
+ *
+ * 
+ *
+ * Fallback occurs ONLY for quota/rate-limit errors.
+ */
+
+async function generateGeminiResponse(notes: string) {
+  try {
+    /**
+     * --------------------------------------------------------
+     * PRIMARY MODEL
+     * --------------------------------------------------------
+     */
+    return await ai.models.generateContent({
+      model: PRIMARY_MODEL,
+      contents: buildPrompt(notes),
+    });
+  } catch (primaryError: unknown) {
+    /**
+     * --------------------------------------------------------
+     * ONLY FALLBACK FOR QUOTA ERRORS
+     * --------------------------------------------------------
+     */
+    if (!isGeminiQuotaError(primaryError)) {
+      throw primaryError;
+    }
+
+    console.warn(
+      `[VetDx Assist] ${PRIMARY_MODEL} quota/rate limit reached. Trying fallback models.`
+    );
+
+    /**
+     * --------------------------------------------------------
+     * FALLBACK MODELS
+     * --------------------------------------------------------
+     */
+    for (const fallbackModel of FALLBACK_MODELS) {
+      try {
+        console.warn(
+          `[VetDx Assist] Trying fallback model: ${fallbackModel}`
+        );
+
+        return await ai.models.generateContent({
+          model: fallbackModel,
+          contents: buildPrompt(notes),
+        });
+      } catch (fallbackError: unknown) {
+        /**
+         * ----------------------------------------------------
+         * Continue ONLY if fallback also has quota problem.
+         *
+         * Any other error stops immediately.
+         * ----------------------------------------------------
+         */
+        if (!isGeminiQuotaError(fallbackError)) {
+          throw fallbackError;
+        }
+
+        console.warn(
+          `[VetDx Assist] ${fallbackModel} quota/rate limit reached.`
+        );
+      }
+    }
+
+    /**
+     * --------------------------------------------------------
+     * ALL MODELS EXHAUSTED
+     * --------------------------------------------------------
+     */
+    throw new Error(
+      "Gemini quota is currently unavailable for all configured models."
+    );
+  }
+}
 
 
 function buildPrompt(notes: string) {
@@ -136,70 +301,6 @@ function cleanResponse(text: string) {
 
 
 
-// Remove empty fields recursively
-
-function removeEmptyFields(value: any): any {
-
-  if (Array.isArray(value)) {
-
-    const cleanedArray = value
-      .map(removeEmptyFields)
-      .filter(
-        (item) =>
-          item !== "" &&
-          item !== null &&
-          item !== undefined
-      );
-
-
-    return cleanedArray;
-  }
-
-
-
-  if (
-    value &&
-    typeof value === "object"
-  ) {
-
-    const cleanedObject: any = {};
-
-
-    Object.entries(value).forEach(
-      ([key, val]) => {
-
-        const cleanedValue =
-          removeEmptyFields(val);
-
-
-        if (
-          cleanedValue !== undefined &&
-          cleanedValue !== ""
-        ) {
-
-          cleanedObject[key] =
-            cleanedValue;
-
-        }
-
-      }
-    );
-
-
-    return Object.keys(cleanedObject).length > 0
-      ? cleanedObject
-      : undefined;
-
-  }
-
-
-  return value === ""
-    ? undefined
-    : value;
-}
-
-
-
 function validateExtractedCase(data: any) {
 
   return (
@@ -244,14 +345,7 @@ export async function POST(req: Request) {
 
 
     const response =
-      await ai.models.generateContent({
-
-        model: MODEL,
-
-        contents:
-          buildPrompt(notes),
-
-      });
+  await generateGeminiResponse(notes);
 
 
 

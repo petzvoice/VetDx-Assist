@@ -12,8 +12,15 @@ const ai = new GoogleGenAI({
   apiKey: process.env.GEMINI_API_KEY!,
 });
 
-const MODEL = "gemini-2.5-flash";
+const PRIMARY_MODEL = "gemini-2.5-flash";
 
+const FALLBACK_MODELS = [
+  
+  "gemini-3-flash-preview",
+  "gemini-2.5-flash-lite",
+  "gemini-3.5-flash-lite",
+  "gemini-3.5-flash",
+] as const;
 /**
  * ============================================================
  * ALLOWED VALUES
@@ -151,7 +158,7 @@ species.
 ==================================================
 3. DIFFERENTIAL DIAGNOSES
 ==================================================
-
+IMPORTANT: Tick exposure is only a risk factor, not a diagnosis. Do not automatically rank Anaplasmosis because of tick exposure, fever, or thrombocytopenia. Rank tick-borne diseases using the complete clinical picture and consider Ehrlichiosis, Babesiosis, and other appropriate differentials when supported. Do not invent missing findings.
 Generate UP TO 5 clinically justified differentials.
 
 Return fewer if fewer are clinically justified.
@@ -430,7 +437,172 @@ ${JSON.stringify(caseData)}
  * RESPONSE CLEANING
  * ============================================================
  */
+/**
+ * ============================================================
+ * GEMINI QUOTA ERROR DETECTION
+ * ============================================================
+ *
+ * IMPORTANT:
+ *
+ * Fallback models are used ONLY for quota/rate-limit errors.
+ *
+ * We deliberately DO NOT fallback for:
+ * - malformed JSON
+ * - empty response
+ * - invalid clinical report
+ * - authentication errors
+ * - permission errors
+ * - bad request errors
+ * - application errors
+ *
+ * This prevents fallback models from hiding real VetDx Assist
+ * problems.
+ */
 
+function isGeminiQuotaError(error: unknown): boolean {
+  if (!error) {
+    return false;
+  }
+
+  const errorObject =
+    error as {
+      status?: unknown;
+      code?: unknown;
+      message?: unknown;
+      error?: {
+        status?: unknown;
+        code?: unknown;
+        message?: unknown;
+      };
+    };
+
+  const status =
+    errorObject.status ??
+    errorObject.code ??
+    errorObject.error?.status ??
+    errorObject.error?.code;
+
+  if (
+    status === 429 ||
+    status === "429" ||
+    status === "RESOURCE_EXHAUSTED"
+  ) {
+    return true;
+  }
+
+  const message = String(
+    errorObject.message ??
+      errorObject.error?.message ??
+      error
+  ).toLowerCase();
+
+  return (
+    message.includes("resource exhausted") ||
+    message.includes("quota exceeded") ||
+    message.includes("quota exceeded for") ||
+    message.includes("rate limit exceeded") ||
+    message.includes("too many requests")
+  );
+}
+/**
+ * ============================================================
+ * GEMINI GENERATION WITH QUOTA-ONLY FALLBACK
+ * ============================================================
+ *
+ * Primary:
+ *   gemini-2.5-flash
+ *
+ * Fallback order:
+ *   
+ * 1. gemini-3-flash-preview",
+ *
+ * 3. gemini-2.5-flash-lite",
+ * 4. gemini-3.5-flash-lite",
+ * 5. gemini-3.5-flash",
+ *
+ * FALLBACK IS USED ONLY FOR QUOTA/RATE-LIMIT ERRORS.
+ *
+ * All other errors are immediately re-thrown.
+ *
+ * The prompt and generation configuration remain identical
+ * across all models.
+ */
+
+async function generateGeminiResponse(
+  prompt: string
+) {
+  try {
+    /**
+     * --------------------------------------------------------
+     * PRIMARY MODEL
+     * --------------------------------------------------------
+     */
+    return await ai.models.generateContent({
+      model: PRIMARY_MODEL,
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+      },
+    });
+  } catch (primaryError: unknown) {
+    /**
+     * --------------------------------------------------------
+     * ONLY FALLBACK FOR QUOTA ERRORS
+     * --------------------------------------------------------
+     */
+    if (!isGeminiQuotaError(primaryError)) {
+      throw primaryError;
+    }
+
+    console.warn(
+      `[VetDx Assist] ${PRIMARY_MODEL} quota/rate limit reached. Trying fallback models.`
+    );
+
+    /**
+     * --------------------------------------------------------
+     * FALLBACK MODELS
+     * --------------------------------------------------------
+     */
+    for (const fallbackModel of FALLBACK_MODELS) {
+      try {
+        console.warn(
+          `[VetDx Assist] Trying fallback model: ${fallbackModel}`
+        );
+
+        return await ai.models.generateContent({
+          model: fallbackModel,
+          contents: prompt,
+          config: {
+            responseMimeType: "application/json",
+          },
+        });
+      } catch (fallbackError: unknown) {
+        /**
+         * ----------------------------------------------------
+         * Continue ONLY if fallback also has quota problem.
+         * Any other error stops immediately.
+         * ----------------------------------------------------
+         */
+        if (!isGeminiQuotaError(fallbackError)) {
+          throw fallbackError;
+        }
+
+        console.warn(
+          `[VetDx Assist] ${fallbackModel} quota/rate limit reached.`
+        );
+      }
+    }
+
+    /**
+     * --------------------------------------------------------
+     * ALL MODELS EXHAUSTED
+     * --------------------------------------------------------
+     */
+    throw new Error(
+      "Gemini quota is currently unavailable for all configured models."
+    );
+  }
+}
 function cleanResponse(text: string): string {
   return text
     .replace(/^\uFEFF/, "")
@@ -1371,13 +1543,8 @@ function validateDifferentials(
       normalizedSpecies
     ] ?? [];
 
-  const escapeRegex = (
-    value: string
-  ) =>
-    value.replace(
-      /[-/\\^$*+?.()|[\]{}]/g,
-      "\\$&"
-    );
+  const escapeRegex = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
   const isWrongSpeciesDiagnosis =
     (name: string): boolean => {
@@ -1620,17 +1787,9 @@ export async function POST(
      */
 
     const response =
-      await ai.models.generateContent(
-        {
-          model: MODEL,
-          contents: prompt,
-
-          config: {
-            responseMimeType:
-              "application/json",
-          },
-        }
-      );
+  await generateGeminiResponse(
+    prompt
+  );
 
     const rawText =
       response.text ?? "";
