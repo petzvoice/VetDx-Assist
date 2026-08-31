@@ -10,6 +10,7 @@ import RecommendedDiagnosticsCard from "./RecommendedDiagnosticsCard";
 import EmergencyFlagsCard from "./EmergencyFlagsCard";
 import PrognosisCard from "./PrognosisCard";
 import ClientSummaryCard from "./ClientSummaryCard";
+import ClinicalFollowUpChat from "./ClinicalFollowUpChat";
 
 type Props = {
   report: AIClinicalReportType;
@@ -131,6 +132,7 @@ export default function AIClinicalReport({
           report.clientSummary ?? ""
         }
       />
+            <ClinicalFollowUpChat report={report} />
        {/* ======================================================
           NOTES
           Static UI information — NOT AI GENERATED
